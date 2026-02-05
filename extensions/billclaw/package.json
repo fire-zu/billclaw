@@ -1,0 +1,59 @@
+{
+  "name": "@fire-zu/billclaw",
+  "version": "0.0.1",
+  "description": "Bank transaction and bill data import for OpenClaw - Data sovereignty for your financial data",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "openclaw.plugin.json"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "lint": "oxlint",
+    "format": "oxfmt"
+  },
+  "keywords": [
+    "openclaw",
+    "plugin",
+    "plaid",
+    "gocardless",
+    "banking",
+    "finance",
+    "bills",
+    "transactions",
+    "data-sovereignty"
+  ],
+  "author": "fire-zu",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fire-zu/billclaw.git",
+    "directory": "extensions/billclaw"
+  },
+  "peerDependencies": {
+    "openclaw": "*"
+  },
+  "devDependencies": {
+    "@openclaw/plugin-sdk": "*",
+    "openclaw": "*",
+    "typescript": "^5.8.0",
+    "vitest": "^3.0.0",
+    "oxlint": "^0.15.0",
+    "oxfmt": "^0.1.0"
+  },
+  "dependencies": {
+    "plaid": "^32.0.0",
+    "zod": "^3.24.0"
+  }
+}
