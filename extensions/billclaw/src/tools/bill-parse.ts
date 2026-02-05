@@ -17,26 +17,57 @@ export interface BillParseResult {
 }
 
 /**
- * Parse bill data from various formats
+ * OpenClaw tool return format
  */
-export async function billParseTool(params: BillParseParams): Promise<BillParseResult> {
+interface ToolReturn {
+  content: Array<{ type: string; text: string }>;
+}
+
+/**
+ * Convert BillParseResult to OpenClaw tool return format
+ */
+export function toToolReturn(result: BillParseResult): ToolReturn {
+  return {
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify(result, null, 2),
+      },
+    ],
+  };
+}
+
+/**
+ * Parse bill data from various formats
+ * Returns OpenClaw tool format: { content: [{ type: "text", text: "..." }] }
+ */
+export async function billParseTool(params: BillParseParams): Promise<ToolReturn> {
+  let result: BillParseResult;
+
   switch (params.source) {
     case "plaid":
-      return parsePlaidData(params.data);
+      result = await parsePlaidData(params.data);
+      break;
     case "gmail":
-      return parseGmailEmail(params.data);
+      result = await parseGmailEmail(params.data);
+      break;
     case "file":
-      return parseFile(params.data);
+      result = await parseFile(params.data);
+      break;
     case "email":
-      return parseEmail(params.data);
+      result = await parseEmail(params.data);
+      break;
     default:
-      return {
+      result = {
         success: false,
         format: "unknown",
         transactions: [],
         errors: [`Unknown source type: ${params.source}`],
       };
   }
+
+  // Return OpenClaw tool format
+  return toToolReturn(result);
 }
 
 /**

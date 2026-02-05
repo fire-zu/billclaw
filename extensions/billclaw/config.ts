@@ -2,124 +2,21 @@
  * billclaw configuration schema
  *
  * Parseable schema with embedded uiHints for OpenClaw config UI
+ * Uses Zod for type-safe validation (matching official voice-call plugin)
  */
 
 import * as os from "node:os";
 import * as path from "node:path";
+import { z } from "zod";
+import {
+  BillclawConfigSchema,
+  type BillclawConfig,
+  type AccountConfig,
+  type StorageConfig,
+} from "./src/config-zod.js";
 
-/**
- * Account types supported by billclaw
- */
-export const ACCOUNT_TYPES = ["plaid", "gocardless", "gmail"] as const;
-export type AccountType = (typeof ACCOUNT_TYPES)[number];
-
-/**
- * Sync frequency options
- */
-export const SYNC_FREQUENCIES = ["realtime", "hourly", "daily", "weekly", "manual"] as const;
-export type SyncFrequency = (typeof SYNC_FREQUENCIES)[number];
-
-/**
- * Plaid environment options
- */
-export const PLAID_ENVIRONMENTS = ["sandbox", "development", "production"] as const;
-export type PlaidEnvironment = (typeof PLAID_ENVIRONMENTS)[number];
-
-/**
- * Webhook event types
- */
-export const WEBHOOK_EVENT_TYPES = [
-  "transaction.new",
-  "transaction.updated",
-  "transaction.deleted",
-  "sync.started",
-  "sync.completed",
-  "sync.failed",
-  "account.connected",
-  "account.disconnected",
-  "account.error",
-  "webhook.test",
-] as const;
-export type WebhookEventType = (typeof WEBHOOK_EVENT_TYPES)[number];
-
-/**
- * Per-account configuration
- */
-export type AccountConfig = {
-  id: string;
-  type: AccountType;
-  name: string;
-  enabled: boolean;
-  syncFrequency: SyncFrequency;
-  lastSync?: string;
-  lastStatus?: "success" | "error" | "pending";
-  // Plaid-specific
-  plaidItemId?: string;
-  plaidAccessToken?: string;
-  // GoCardless-specific
-  gocardlessRequisitionId?: string;
-  gocardlessAccessToken?: string;
-  // Gmail-specific
-  gmailEmailAddress?: string;
-  gmailFilters?: string[];
-};
-
-/**
- * Webhook configuration
- */
-export type WebhookConfig = {
-  enabled: boolean;
-  url?: string;
-  secret?: string;
-  retryPolicy: {
-    maxRetries: number;
-    initialDelay: number;
-    maxDelay: number;
-  };
-  events: WebhookEventType[];
-};
-
-/**
- * Storage configuration
- */
-export type StorageConfig = {
-  path: string;
-  format: "json" | "csv" | "both";
-  encryption: {
-    enabled: boolean;
-    keyPath?: string;
-  };
-};
-
-/**
- * Plaid configuration
- */
-export type PlaidConfig = {
-  clientId?: string;
-  secret?: string;
-  environment: PlaidEnvironment;
-  webhookUrl?: string;
-};
-
-/**
- * Sync configuration
- */
-export type SyncConfig = {
-  defaultFrequency: SyncFrequency;
-  retryOnFailure: boolean;
-  maxRetries: number;
-};
-
-/**
- * Main billclaw configuration
- */
-export type BillclawConfig = {
-  accounts: AccountConfig[];
-  webhooks: WebhookConfig[];
-  storage: StorageConfig;
-  sync: SyncConfig;
-  plaid: PlaidConfig;
-};
+// Re-export types for other modules
+export type { BillclawConfig, AccountConfig, StorageConfig };
 
 /**
  * Resolve environment variables in config values
@@ -135,143 +32,40 @@ function resolveEnvVars(value: string): string {
 }
 
 /**
- * Resolve default storage path
- */
-function resolveDefaultStoragePath(): string {
-  return path.join(os.homedir(), ".openclaw", "billclaw");
-}
-
-/**
- * Validate account config
- */
-function validateAccountConfig(account: unknown): account is AccountConfig {
-  if (!account || typeof account !== "object") {
-    return false;
-  }
-  const acc = account as Record<string, unknown>;
-
-  return (
-    typeof acc.id === "string" &&
-    typeof acc.type === "string" &&
-    ACCOUNT_TYPES.includes(acc.type as AccountType) &&
-    typeof acc.name === "string" &&
-    typeof acc.enabled === "boolean" &&
-    typeof acc.syncFrequency === "string" &&
-    SYNC_FREQUENCIES.includes(acc.syncFrequency as SyncFrequency)
-  );
-}
-
-/**
  * Main config schema with parse method and embedded uiHints
  */
 export const billclawConfigSchema = {
+  /**
+   * Parse and validate configuration using Zod
+   * This provides type-safe validation with detailed error messages
+   */
   parse(value: unknown): BillclawConfig {
-    if (!value || typeof value !== "object" || Array.isArray(value)) {
-      throw new Error("billclaw config required");
-    }
-
-    const cfg = value as Record<string, unknown>;
-
-    // Validate accounts array
-    const accounts: AccountConfig[] = [];
-    if (cfg.accounts && Array.isArray(cfg.accounts)) {
-      for (const account of cfg.accounts) {
-        if (!validateAccountConfig(account)) {
-          throw new Error(`Invalid account config: ${JSON.stringify(account)}`);
-        }
-        accounts.push(account as AccountConfig);
+    // First pass: parse with Zod for type safety
+    let config: BillclawConfig;
+    try {
+      config = BillclawConfigSchema.parse(value);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const errorMessages = error.errors.map(
+          (e) => `${e.path.join(".")}: ${e.message}`
+        );
+        throw new Error(`Configuration validation failed:\n${errorMessages.join("\n")}`);
       }
+      throw error;
     }
 
-    // Validate webhooks array
-    const webhooks: WebhookConfig[] = [];
-    if (cfg.webhooks && Array.isArray(cfg.webhooks)) {
-      for (const webhook of cfg.webhooks) {
-        if (!webhook || typeof webhook !== "object") {
-          throw new Error("Invalid webhook config");
-        }
-        webhooks.push(webhook as WebhookConfig);
-      }
+    // Second pass: resolve environment variables in secret fields
+    if (config.plaid.secret) {
+      config.plaid.secret = resolveEnvVars(config.plaid.secret);
     }
 
-    // Validate storage config
-    let storage: StorageConfig = {
-      path: resolveDefaultStoragePath(),
-      format: "json",
-      encryption: { enabled: false },
-    };
-    if (cfg.storage && typeof cfg.storage === "object") {
-      const sto = cfg.storage as Record<string, unknown>;
-
-      // Extract format
-      let storageFormat: "json" | "csv" | "both" = "json";
-      if (sto.format === "csv" || sto.format === "both") {
-        storageFormat = sto.format;
-      }
-
-      // Extract encryption config
-      let encryptionEnabled = false;
-      let keyPath: string | undefined = undefined;
-      if (sto.encryption && typeof sto.encryption === "object") {
-        const enc = sto.encryption as Record<string, unknown>;
-        if (typeof enc.enabled === "boolean") {
-          encryptionEnabled = enc.enabled;
-        }
-        if (typeof enc.keyPath === "string") {
-          keyPath = enc.keyPath;
-        }
-      }
-
-      storage = {
-        path: typeof sto.path === "string" ? sto.path : storage.path,
-        format: storageFormat,
-        encryption: {
-          enabled: encryptionEnabled,
-          keyPath,
-        },
-      };
-    }
-
-    // Validate sync config
-    let sync: SyncConfig = {
-      defaultFrequency: "daily",
-      retryOnFailure: true,
-      maxRetries: 3,
-    };
-    if (cfg.sync && typeof cfg.sync === "object") {
-      const sy = cfg.sync as Record<string, unknown>;
-      sync = {
-        defaultFrequency: SYNC_FREQUENCIES.includes(sy.defaultFrequency as SyncFrequency) ?
-                           sy.defaultFrequency as SyncFrequency : "daily",
-        retryOnFailure: typeof sy.retryOnFailure === "boolean" ? sy.retryOnFailure : true,
-        maxRetries: typeof sy.maxRetries === "number" ? sy.maxRetries : 3,
-      };
-    }
-
-    // Validate plaid config
-    let plaid: PlaidConfig = {
-      environment: "sandbox",
-    };
-    if (cfg.plaid && typeof cfg.plaid === "object") {
-      const pl = cfg.plaid as Record<string, unknown>;
-      plaid = {
-        clientId: typeof pl.clientId === "string" ? pl.clientId : undefined,
-        secret: typeof pl.secret === "string" ? resolveEnvVars(pl.secret) : undefined,
-        environment: PLAID_ENVIRONMENTS.includes(pl.environment as PlaidEnvironment) ?
-                      pl.environment as PlaidEnvironment : "sandbox",
-        webhookUrl: typeof pl.webhookUrl === "string" ? pl.webhookUrl : undefined,
-      };
-    }
-
-    return {
-      accounts,
-      webhooks,
-      storage,
-      sync,
-      plaid,
-    };
+    return config;
   },
 
+  /**
+   * UI hints for OpenClaw configuration interface
+   * These match the structure in openclaw.plugin.json
+   */
   uiHints: {
     "accounts": {
       label: "Bank Accounts",
@@ -423,6 +217,40 @@ export const billclawConfigSchema = {
       type: "boolean",
       default: true,
       help: "Automatically retry failed sync operations",
+    },
+    "gmail.clientId": {
+      label: "Gmail OAuth Client ID",
+      type: "text",
+      placeholder: "Your Google Cloud OAuth client ID",
+      help: "Get this from your Google Cloud Console",
+    },
+    "gmail.clientSecret": {
+      label: "Gmail OAuth Client Secret",
+      type: "password",
+      sensitive: true,
+      placeholder: "Your Google Cloud OAuth client secret",
+      help: "Get this from your Google Cloud Console",
+    },
+    "gmail.senderWhitelist": {
+      label: "Trusted Senders",
+      type: "tags",
+      placeholder: "e.g., @netflix.com, billing@paypal.com",
+      help: "Email addresses/domains that are trusted for bill detection",
+      description: "Add email addresses or domains (e.g., @netflix.com) that should always be checked for bills",
+    },
+    "gmail.keywords": {
+      label: "Bill Keywords",
+      type: "tags",
+      placeholder: "invoice, statement, bill due, receipt",
+      default: ["invoice", "statement", "bill due", "receipt", "payment due"],
+      help: "Keywords that indicate an email contains a bill",
+    },
+    "gmail.pubsubTopic": {
+      label: "Gmail Pub/Sub Topic",
+      type: "text",
+      placeholder: "projects/my-project/topics/my-topic",
+      help: "Google Cloud Pub/Sub topic for push notifications",
+      advanced: true,
     },
   },
 };

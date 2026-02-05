@@ -48,6 +48,36 @@ billclaw enables you to import your financial transaction data from Plaid, Gmail
    openclaw bills setup
    ```
 
+## Documentation
+
+### Data Source Setup
+
+| Guide | Description |
+|-------|-------------|
+| [Plaid Setup Guide](docs/plaid-setup-guide.md) | Step-by-step Plaid API configuration for US/Canadian banks |
+| [Gmail Setup Guide](docs/gmail-setup-guide.md) | Gmail API configuration, OAuth 2.0, and Pub/Sub setup |
+
+### Usage & Configuration
+
+| Guide | Description |
+|-------|-------------|
+| [User Guide](docs/user-guide.md) | Complete usage documentation and CLI command reference |
+| [Recognition Rules](docs/recognition-rules.md) | How bill recognition works, customization, and tuning |
+| [Cost Guide](docs/costs.md) | Understanding costs for Plaid and Gmail APIs |
+
+### Integration & Exports
+
+| Guide | Description |
+|-------|-------------|
+| [Webhook Integration Guide](docs/webhook-guide.md) | Configure webhooks for real-time event notifications |
+| [Event Format Reference](docs/event-format-reference.md) | Detailed webhook event payload specifications |
+
+### Support
+
+| Guide | Description |
+|-------|-------------|
+| [Troubleshooting Guide](docs/troubleshooting.md) | Diagnose and resolve common issues with billclaw |
+
 ## Usage
 
 ### Sync Transactions
@@ -209,7 +239,9 @@ npm run format
 
 ## Troubleshooting
 
-### Sync Fails
+For comprehensive troubleshooting information, see the [Troubleshooting Guide](docs/troubleshooting.md).
+
+### Quick Checks
 
 ```bash
 # Check sync status
@@ -218,30 +250,20 @@ openclaw bills status
 # Check logs
 openclaw logs billclaw-sync
 
-# Force re-sync
-openclaw bills sync --force
+# View configuration
+openclaw bills config
 ```
 
-### Invalid Plaid Credentials
+### Common Issues
 
-```bash
-# Update credentials
-export PLAID_CLIENT_ID="new_id"
-export PLAID_SECRET="new_secret"
+| Issue | Solution |
+|-------|----------|
+| Sync fails | Check credentials and network connection |
+| Invalid Plaid credentials | Run `openclaw config set billclaw.plaid.clientId YOUR_ID` |
+| Data not appearing | Check `~/.openclaw/billclaw/transactions/` directory |
+| Authentication errors | Run `openclaw bills setup` to re-authenticate |
 
-# Re-sync
-openclaw bills sync
-```
-
-### Data Not Appearing
-
-```bash
-# Check storage path
-ls ~/.openclaw/billclaw/transactions/
-
-# Check manifest
-cat ~/.openclaw/billclaw/manifest.json
-```
+For detailed solutions, see the [Troubleshooting Guide](docs/troubleshooting.md).
 
 ## License
 

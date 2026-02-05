@@ -33,6 +33,13 @@ export interface PlaidSyncResult {
 }
 
 /**
+ * OpenClaw tool return format
+ */
+interface ToolReturn {
+  content: Array<{ type: string; text: string }>;
+}
+
+/**
  * Get Plaid client configuration
  */
 function getPlaidConfig(context: OpenClawPluginApi): {
@@ -205,6 +212,26 @@ async function syncAccount(
     syncState.status = "failed";
     syncState.error = errorMsg;
     context.logger.error(`Sync failed for ${account.id}:`, error);
+
+    // Check for Plaid-specific errors that require user action
+    if (error && typeof error === "object") {
+      const plaidError = error as any;
+      const errorCode = plaidError.code || plaidError.error_code;
+
+      // Item login errors - user needs to re-authenticate via Plaid Link
+      if (
+        errorCode === "ITEM_LOGIN_REQUIRED" ||
+        errorCode === "INVALID_ACCESS_TOKEN" ||
+        errorCode === "PRODUCTS_NOT_READY" ||
+        (plaidError.response?.data?.error_code === "ITEM_LOGIN_REQUIRED")
+      ) {
+        context.logger.warn?.(
+          `Account ${account.id} requires re-authentication via Plaid Link`
+        );
+        syncState.error = `ITEM_LOGIN_REQUIRED: Please re-connect this account via Plaid Link`;
+        syncState.requiresReauth = true;
+      }
+    }
   } finally {
     await writeSyncState(syncState, storageConfig);
   }
@@ -221,11 +248,12 @@ async function syncAccount(
 
 /**
  * Sync transactions from Plaid for a specific account or all accounts
+ * Returns OpenClaw tool format: { content: [{ type: "text", text: "..." }] }
  */
 export async function plaidSyncTool(
   context: OpenClawPluginApi,
   params: PlaidSyncParams
-): Promise<PlaidSyncResult> {
+): Promise<ToolReturn> {
   const config = context.pluginConfig as BillclawConfig;
   const accounts = config?.accounts || [];
   const storageConfig: StorageConfig = config?.storage || {};
@@ -236,14 +264,14 @@ export async function plaidSyncTool(
   );
 
   if (plaidAccounts.length === 0) {
-    return {
+    return toToolReturn({
       success: false,
       accountId: params.accountId || "all",
       transactionsAdded: 0,
       transactionsUpdated: 0,
       cursor: "",
       errors: ["No enabled Plaid accounts found"],
-    };
+    });
   }
 
   // Sync specific account or all Plaid accounts
@@ -252,7 +280,7 @@ export async function plaidSyncTool(
     : plaidAccounts;
 
   if (accountsToSync.length === 0) {
-    return {
+    return toToolReturn({
       success: false,
       accountId: params.accountId || "all",
       transactionsAdded: 0,
@@ -261,7 +289,7 @@ export async function plaidSyncTool(
       errors: params.accountId
         ? [`Account ${params.accountId} not found or not enabled`]
         : ["No enabled Plaid accounts found"],
-    };
+    });
   }
 
   let totalAdded = 0;
@@ -289,7 +317,7 @@ export async function plaidSyncTool(
     storageConfig
   );
 
-  return {
+  const result = {
     success: allErrors.length === 0,
     accountId: params.accountId || "all",
     transactionsAdded: totalAdded,
@@ -297,4 +325,33 @@ export async function plaidSyncTool(
     cursor: lastCursor,
     errors: allErrors.length > 0 ? allErrors : undefined,
   };
+
+  // Return OpenClaw tool format
+  return result as unknown as ToolReturn;
+}
+
+/**
+ * Convert PlaidSyncResult to OpenClaw tool return format
+ */
+export function toToolReturn(result: PlaidSyncResult): ToolReturn {
+  return {
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify(result, null, 2),
+      },
+    ],
+  };
+}
+
+/**
+ * Parse OpenClaw tool return format back to PlaidSyncResult
+ * For internal use in CLI commands and services
+ */
+export function fromToolReturn(toolReturn: ToolReturn): PlaidSyncResult {
+  const text = toolReturn.content[0]?.text;
+  if (!text) {
+    throw new Error("Invalid tool return format: missing text content");
+  }
+  return JSON.parse(text) as PlaidSyncResult;
 }

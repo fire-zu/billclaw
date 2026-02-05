@@ -5,7 +5,7 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { AccountConfig, type BillclawConfig } from "../../config.js";
 import type { PlaidSyncResult } from "../tools/plaid-sync.js";
-import { plaidSyncTool } from "../tools/plaid-sync.js";
+import { plaidSyncTool, fromToolReturn } from "../tools/plaid-sync.js";
 
 export interface SyncServiceState {
   isRunning: boolean;
@@ -82,9 +82,10 @@ async function syncAccount(
   context: OpenClawPluginApi
 ): Promise<void> {
   try {
-    const result: PlaidSyncResult = await plaidSyncTool(context, {
+    const toolReturn = await plaidSyncTool(context, {
       accountId,
     });
+    const result = fromToolReturn(toolReturn);
 
     if (result.success) {
       context.logger.info?.(

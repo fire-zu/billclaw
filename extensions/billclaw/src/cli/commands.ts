@@ -3,14 +3,80 @@
  */
 
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
-import type { BillclawConfig } from "../../config.js";
+import type { BillclawConfig, AccountConfig } from "../../config.js";
 import type { PlaidSyncResult } from "../tools/plaid-sync.js";
-import { plaidSyncTool } from "../tools/plaid-sync.js";
+import { plaidSyncTool, fromToolReturn } from "../tools/plaid-sync.js";
 import {
   initializeStorage,
   readAccountRegistry,
   readSyncStates,
+  writeAccountRegistry,
+  type AccountRegistry,
 } from "../storage/transaction-storage.js";
+import * as fs from "node:fs/promises";
+import * as path from "node:path";
+import * as os from "node:os";
+import * as readline from "node:readline/promises";
+
+/**
+ * Create a readline interface for user input
+ */
+function createReadline(): readline.Interface {
+  return readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+}
+
+/**
+ * Ask a question and get user input
+ */
+async function askQuestion(
+  rl: readline.Interface,
+  question: string,
+  defaultValue?: string
+): Promise<string> {
+  const prompt = defaultValue ? `${question} [${defaultValue}]: ` : `${question}: `;
+  const answer = await rl.question(prompt);
+  return answer.trim() || defaultValue || "";
+}
+
+/**
+ * Ask a yes/no question
+ */
+async function askYesNo(
+  rl: readline.Interface,
+  question: string,
+  defaultValue: boolean = false
+): Promise<boolean> {
+  const defaultStr = defaultValue ? "Y/n" : "y/N";
+  const answer = await rl.question(`${question} [${defaultStr}]: `);
+  const normalized = answer.trim().toLowerCase();
+  if (!normalized) return defaultValue;
+  return normalized === "y" || normalized === "yes";
+}
+
+/**
+ * Select from a list of options
+ */
+async function askSelect(
+  rl: readline.Interface,
+  question: string,
+  options: string[],
+  defaultIndex: number = 0
+): Promise<number> {
+  console.log(question);
+  for (let i = 0; i < options.length; i++) {
+    const suffix = i === defaultIndex ? " (default)" : "";
+    console.log(`  ${i + 1}. ${options[i]}${suffix}`);
+  }
+  const answer = await rl.question(`Select option [1-${options.length}]: `);
+  const index = parseInt(answer.trim(), 10) - 1;
+  if (isNaN(index) || index < 0 || index >= options.length) {
+    return defaultIndex;
+  }
+  return index;
+}
 
 /**
  * Mock context for CLI commands (in real usage, OpenClaw provides this)
@@ -38,36 +104,172 @@ function createMockContext(): MockContext {
  * Interactive setup wizard for connecting bank accounts
  */
 export async function setupWizard(): Promise<void> {
-  console.log("🦀 billclaw Setup Wizard");
-  console.log("This will guide you through connecting your bank accounts.\n");
+  const rl = createReadline();
 
-  // Initialize storage
-  await initializeStorage();
+  try {
+    console.log("🦀 billclaw Setup Wizard");
+    console.log("This will guide you through connecting your bank accounts.\n");
 
-  // Initialize storage
-  await initializeStorage();
+    // Initialize storage
+    await initializeStorage();
 
-  // Step 1: Select data source
-  console.log("Step 1: Select your data source");
-  console.log("  1. Plaid (US/Canada)");
-  console.log("  2. GoCardless (Europe) - Coming soon");
-  console.log("  3. Gmail Bills - Coming soon\n");
+    // Read existing accounts
+    const existingAccounts = await readAccountRegistry();
 
-  // In real implementation, this would be interactive
-  // For now, show instructions for Plaid setup
-  console.log("⚠️  Plaid Setup Instructions:");
-  console.log("\n1. Get your Plaid API credentials:");
-  console.log("   - Go to https://dashboard.plaid.com");
-  console.log("   - Create an account or sign in");
-  console.log("   - Go to API Keys and note your Client ID and Secret");
-  console.log("\n2. Set environment variables:");
-  console.log("   export PLAID_CLIENT_ID='your_client_id'");
-  console.log("   export PLAID_SECRET='your_secret'");
-  console.log("\n3. Run: openclaw bills sync");
-  console.log("\n4. For OAuth flow (coming soon):");
-  console.log("   Run: openclaw bills setup --interactive");
-  console.log("\n💡 Your transactions will be stored in: ~/.openclaw/billclaw/");
-  console.log("💡 Data sovereignty: Access tokens are stored locally, never on our servers.");
+    if (existingAccounts.length > 0) {
+      console.log(`You have ${existingAccounts.length} existing account(s):\n`);
+      for (const account of existingAccounts) {
+        // AccountRegistry doesn't have enabled field - show as configured
+        console.log(`  ✅ ${account.name} (${account.type})`);
+      }
+      console.log("");
+
+      const addAnother = await askYesNo(rl, "Do you want to add another account?", false);
+      if (!addAnother) {
+        console.log("\n💡 Run 'openclaw bills sync' to sync your accounts.");
+        console.log("💡 Run 'openclaw bills status' to view connection status.");
+        return;
+      }
+    }
+
+    // Step 1: Select account type
+    console.log("\nStep 1: Select your data source");
+    const typeIndex = await askSelect(
+      rl,
+      "Choose your bank connection method:",
+      [
+        "Plaid (US/Canada banks)",
+        "GoCardless (European banks) - Coming soon",
+        "Gmail Bills - Coming soon",
+      ]
+    );
+
+    if (typeIndex !== 0) {
+      console.log("\n⚠️  This option is not yet available.");
+      console.log("   Please check back soon or use Plaid for US/Canada banks.\n");
+      console.log("💡 For updates: https://github.com/fire-zu/billclaw");
+      return;
+    }
+
+    // Step 2: Account name
+    console.log("\nStep 2: Name your account");
+    const accountName = await askQuestion(
+      rl,
+      "Account name",
+      "My Checking Account"
+    );
+
+    // Step 3: Plaid configuration
+    console.log("\nStep 3: Configure Plaid API");
+    console.log("\n📋 To get Plaid API credentials:");
+    console.log("   1. Go to https://dashboard.plaid.com");
+    console.log("   2. Create an account or sign in");
+    console.log("   3. Go to API Keys");
+    console.log("   4. Copy your Client ID and Secret\n");
+
+    const clientId = await askQuestion(rl, "Plaid Client ID");
+    if (!clientId) {
+      console.log("\n❌ Client ID is required.");
+      console.log("   Please get your credentials from https://dashboard.plaid.com\n");
+      return;
+    }
+
+    const secret = await askQuestion(rl, "Plaid Secret");
+    if (!secret) {
+      console.log("\n❌ Secret is required.");
+      console.log("   Please get your credentials from https://dashboard.plaid.com\n");
+      return;
+    }
+
+    const envIndex = await askSelect(
+      rl,
+      "Select environment:",
+      ["Sandbox (testing)", "Development", "Production"]
+    );
+
+    const environments = ["sandbox", "development", "production"];
+    const environment = environments[envIndex];
+
+    // Generate account ID
+    const accountId = `plaid_${Date.now()}`;
+
+    // Create account registry entry (requires createdAt field)
+    const newAccountRegistry: AccountRegistry = {
+      id: accountId,
+      type: "plaid",
+      name: accountName,
+      createdAt: new Date().toISOString(),
+    };
+
+    // Update account registry
+    const updatedAccounts = [...existingAccounts, newAccountRegistry];
+    await writeAccountRegistry(updatedAccounts);
+
+    // Save configuration
+    await savePlaidConfig(clientId, secret, environment);
+
+    console.log("\n✅ Account configured successfully!\n");
+    console.log("📝 Summary:");
+    console.log(`   Account ID: ${accountId}`);
+    console.log(`   Name: ${accountName}`);
+    console.log(`   Environment: ${environment}`);
+    console.log(`   Storage: ~/.openclaw/billclaw/`);
+    console.log("\n🔐 Data Sovereignty:");
+    console.log("   - Your Plaid access tokens are stored locally");
+    console.log("   - Tokens are never sent to any external server");
+    console.log("   - You have full control over your financial data");
+    console.log("\n📋 Next Steps:");
+    console.log("   1. Run 'openclaw bills sync' to fetch your transactions");
+    console.log("   2. Run 'openclaw bills status' to view sync status");
+    console.log("   3. Run 'openclaw bills config' to manage settings");
+    console.log("\n💡 Tip: Set environment variables for convenience:");
+    console.log("   export PLAID_CLIENT_ID='your_client_id'");
+    console.log("   export PLAID_SECRET='your_secret'");
+    console.log("   export PLAID_ENVIRONMENT='sandbox'");
+  } finally {
+    rl.close();
+  }
+}
+
+/**
+ * Save Plaid configuration to the config file
+ */
+async function savePlaidConfig(
+  clientId: string,
+  secret: string,
+  environment: string
+): Promise<void> {
+  const configPath = path.join(os.homedir(), ".openclaw", "config.json");
+  const configDir = path.dirname(configPath);
+
+  // Ensure config directory exists
+  try {
+    await fs.mkdir(configDir, { recursive: true });
+  } catch {
+    // Directory might already exist
+  }
+
+  // Read existing config or create new
+  let config: any = {};
+  try {
+    const configData = await fs.readFile(configPath, "utf-8");
+    config = JSON.parse(configData);
+  } catch {
+    // File doesn't exist, create new config
+    config = {};
+  }
+
+  // Update billclaw config
+  config.billclaw = config.billclaw || {};
+  config.billclaw.plaid = config.billclaw.plaid || {};
+  config.billclaw.plaid.clientId = clientId;
+  config.billclaw.plaid.secret = secret;
+  config.billclaw.plaid.environment = environment;
+
+  // Write updated config
+  await fs.writeFile(configPath, JSON.stringify(config, null, 2));
+
+  console.log(`   Config saved to: ${configPath}`);
 }
 
 /**
@@ -88,9 +290,10 @@ export async function syncCommand(
   // In real implementation, this would call the actual tool
   // For now, show a message
   try {
-    const result: PlaidSyncResult = await plaidSyncTool(_context, {
+    const toolReturn = await plaidSyncTool(_context, {
       accountId,
     });
+    const result = fromToolReturn(toolReturn);
 
     if (result.success) {
       console.log(`✅ Sync completed:`);

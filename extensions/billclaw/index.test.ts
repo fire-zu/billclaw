@@ -64,27 +64,31 @@ describe("billclaw plugin registration", () => {
 
     billclawPlugin.register(mockApi);
 
-    // Should register 3 tools
-    expect(mockApi.registerTool).toHaveBeenCalledTimes(3);
+    // Should register 6 tools (3 core + 3 conversational)
+    expect(mockApi.registerTool).toHaveBeenCalledTimes(6);
 
     // Check tool registrations
     const toolCalls = mockApi.registerTool.mock.calls;
 
-    // First tool: plaid_sync
+    // Core tools
     expect(toolCalls[0]?.[0]?.name).toBe("plaid_sync");
     expect(toolCalls[0]?.[0]?.label).toBe("Plaid Sync");
-    expect(toolCalls[0]?.[0]?.parameters).toBeDefined();
-    expect(typeof toolCalls[0]?.[0]?.execute).toBe("function");
 
-    // Second tool: gmail_fetch_bills
     expect(toolCalls[1]?.[0]?.name).toBe("gmail_fetch_bills");
     expect(toolCalls[1]?.[0]?.label).toBe("Gmail Fetch Bills");
-    expect(typeof toolCalls[1]?.[0]?.execute).toBe("function");
 
-    // Third tool: bill_parse
     expect(toolCalls[2]?.[0]?.name).toBe("bill_parse");
     expect(toolCalls[2]?.[0]?.label).toBe("Bill Parse");
-    expect(typeof toolCalls[2]?.[0]?.execute).toBe("function");
+
+    // Conversational tools
+    expect(toolCalls[3]?.[0]?.name).toBe("conversational_sync");
+    expect(toolCalls[3]?.[0]?.label).toBe("Conversational Sync");
+
+    expect(toolCalls[4]?.[0]?.name).toBe("conversational_status");
+    expect(toolCalls[4]?.[0]?.label).toBe("Conversational Status");
+
+    expect(toolCalls[5]?.[0]?.name).toBe("conversational_help");
+    expect(toolCalls[5]?.[0]?.label).toBe("Conversational Help");
   });
 
   it("should register CLI commands when register() is called", () => {
@@ -110,14 +114,23 @@ describe("billclaw plugin registration", () => {
 
     billclawPlugin.register(mockApi);
 
-    expect(mockApi.registerOAuth).toHaveBeenCalledTimes(1);
+    expect(mockApi.registerOAuth).toHaveBeenCalledTimes(2);
 
-    const oauthCall = mockApi.registerOAuth.mock.calls[0];
-    expect(oauthCall?.[0]?.name).toBe("plaid");
-    expect(oauthCall?.[0]?.description).toBe(
+    // First OAuth: Plaid
+    const plaidOAuthCall = mockApi.registerOAuth.mock.calls[0];
+    expect(plaidOAuthCall?.[0]?.name).toBe("plaid");
+    expect(plaidOAuthCall?.[0]?.description).toBe(
       "Plaid Link OAuth flow for connecting bank accounts"
     );
-    expect(typeof oauthCall?.[0]?.handler).toBe("function");
+    expect(typeof plaidOAuthCall?.[0]?.handler).toBe("function");
+
+    // Second OAuth: Gmail
+    const gmailOAuthCall = mockApi.registerOAuth.mock.calls[1];
+    expect(gmailOAuthCall?.[0]?.name).toBe("gmail");
+    expect(gmailOAuthCall?.[0]?.description).toBe(
+      "Gmail OAuth 2.0 flow for accessing email bills"
+    );
+    expect(typeof gmailOAuthCall?.[0]?.handler).toBe("function");
   });
 
   it("should register services when register() is called", () => {

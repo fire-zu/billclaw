@@ -1,3 +1,9 @@
+---
+name: billclaw
+description: Bank transaction and bill data import for OpenClaw. This skill should be used when users need to connect bank accounts via Plaid/GoCardless, fetch bills from Gmail, or manage financial data with local data sovereignty. Access tokens are stored locally, ensuring users maintain full control over their financial data.
+tags: [finance, banking, plaid, gocardless, bills, transactions]
+---
+
 # billclaw - Bank Transaction Import for OpenClaw
 
 > **Your Financial Data, Your Control** - Take back control of your financial data.

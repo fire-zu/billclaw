@@ -36,6 +36,7 @@ export interface SyncState {
   transactionsUpdated: number;
   cursor: string;
   error?: string;
+  requiresReauth?: boolean; // Set to true when Plaid item requires re-authentication
 }
 
 /**

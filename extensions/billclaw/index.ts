@@ -57,13 +57,16 @@ const billclawPlugin = {
         label: "Gmail Fetch Bills",
         description: "Fetch and parse bills from Gmail",
         parameters: Type.Object({
+          accountId: Type.Optional(
+            Type.String({ description: "Specific Gmail account ID to sync (omit for all)" }),
+          ),
           days: Type.Optional(
             Type.Number({ description: "Number of days to look back (default: 30)" }),
           ),
         }),
         async execute(_toolCallId, params) {
           const { gmailFetchTool } = await import("./src/tools/gmail-fetch.js");
-          return gmailFetchTool(params as { days?: number });
+          return gmailFetchTool(api, params as { accountId?: string; days?: number });
         },
       },
       { name: "gmail_fetch_bills" },
@@ -86,6 +89,64 @@ const billclawPlugin = {
         },
       },
       { name: "bill_parse" },
+    );
+
+    // Conversational tools for natural language interaction
+    api.registerTool(
+      {
+        name: "conversational_sync",
+        label: "Conversational Sync",
+        description: "Sync transactions with natural language support. Examples: 'Sync my accounts', 'Fetch transactions from Chase'",
+        parameters: Type.Object({
+          prompt: Type.Optional(
+            Type.String({ description: "Natural language prompt (e.g., 'Sync my accounts')" }),
+          ),
+          accountId: Type.Optional(
+            Type.String({ description: "Explicit account ID to sync" }),
+          ),
+        }),
+        async execute(_toolCallId, params) {
+          const { conversationalSyncTool } = await import("./src/cli/conversational.js");
+          return conversationalSyncTool(api, params as { prompt?: string; accountId?: string });
+        },
+      },
+      { name: "conversational_sync" },
+    );
+
+    api.registerTool(
+      {
+        name: "conversational_status",
+        label: "Conversational Status",
+        description: "Show account status with natural language. Examples: 'Show me the status', 'How are my accounts?'",
+        parameters: Type.Object({
+          prompt: Type.Optional(
+            Type.String({ description: "Natural language prompt" }),
+          ),
+        }),
+        async execute(_toolCallId, params) {
+          const { conversationalStatusTool } = await import("./src/cli/conversational.js");
+          return conversationalStatusTool(api, params as { prompt?: string });
+        },
+      },
+      { name: "conversational_status" },
+    );
+
+    api.registerTool(
+      {
+        name: "conversational_help",
+        label: "Conversational Help",
+        description: "Get help with billclaw commands and features. Examples: 'How do I sync?', 'Export to beancount'",
+        parameters: Type.Object({
+          topic: Type.Optional(
+            Type.String({ description: "Specific help topic (sync, export, webhook, etc.)" }),
+          ),
+        }),
+        async execute(_toolCallId, params) {
+          const { conversationalHelpTool } = await import("./src/cli/conversational.js");
+          return conversationalHelpTool(api, params as { topic?: string });
+        },
+      },
+      { name: "conversational_help" },
     );
 
     // ========================================================================
@@ -146,6 +207,15 @@ const billclawPlugin = {
       handler: async (context) => {
         const { plaidOAuth } = await import("./src/oauth/plaid.js");
         return plaidOAuth(context);
+      },
+    });
+
+    api.registerOAuth({
+      name: "gmail",
+      description: "Gmail OAuth 2.0 flow for accessing email bills",
+      handler: async (context) => {
+        const { gmailOAuth } = await import("./src/oauth/gmail.js");
+        return gmailOAuth(api);
       },
     });
 
