@@ -1,0 +1,12 @@
+{
+  "name": "billclaw",
+  "version": "0.0.1",
+  "description": "Bank transaction and bill data import for OpenClaw - Data sovereignty for your financial data",
+  "private": true,
+  "scripts": {
+    "prepare": "husky .husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}

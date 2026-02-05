@@ -50,3 +50,7 @@ sessions/
 # Plaid sensitive files (just in case)
 *.accessTokens
 *.secret
+
+# Claude Code (local AI development tools)
+.claude/
+CLAUDE.md

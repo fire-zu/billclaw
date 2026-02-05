@@ -1,6 +1,6 @@
 # billclaw
 
-> **账单爪** - Bank transaction and bill data import for OpenClaw
+> **Your Financial Data, Your Control** - Bank transaction and bill data import for OpenClaw
 
 ## Data Sovereignty for Your Financial Data
 

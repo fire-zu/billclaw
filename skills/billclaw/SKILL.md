@@ -1,6 +1,6 @@
 # billclaw - Bank Transaction Import for OpenClaw
 
-> **账单爪** - Take back control of your financial data.
+> **Your Financial Data, Your Control** - Take back control of your financial data.
 
 ## What is billclaw?
 

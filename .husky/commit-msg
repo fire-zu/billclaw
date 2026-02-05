@@ -1,0 +1,46 @@
+#!/usr/bin/env sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "🔍 Validating commit message..."
+
+COMMIT_MSG_FILE=$1
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+# Check for Claude Code signature in commit message (case-insensitive)
+if echo "$COMMIT_MSG" | grep -qiE '(🤖 Generated with.*Claude Code|Co-[Aa]uthored-[Bb]y:.*Claude)'; then
+  echo "❌ Error: Commit message contains Claude Code signature"
+  echo ""
+  echo "Current message:"
+  echo "$COMMIT_MSG"
+  echo ""
+  echo "Please remove the Claude Code signature from your commit message."
+  exit 1
+fi
+
+# Check for Chinese characters in commit message using Perl
+if echo "$COMMIT_MSG" | perl -CSD -e 'while(<>){exit 0 if /[\x{4e00}-\x{9fff}]/} exit 1'; then
+  echo "❌ Error: Commit message contains Chinese characters"
+  echo ""
+  echo "Current message:"
+  echo "$COMMIT_MSG"
+  echo ""
+  echo "Please use English for all commit messages."
+  echo "See .claude/hooks/git.md for commit message format."
+  exit 1
+fi
+
+# Check commit message format (conventional commits)
+if ! echo "$COMMIT_MSG" | grep -qE '^(feat|fix|docs|style|refactor|test|chore|ci|build)(\(.+\))?: .+'; then
+  echo "⚠️  Warning: Commit message doesn't follow conventional commits format"
+  echo ""
+  echo "Expected format: <type>(<scope>): <subject>"
+  echo "Types: feat, fix, docs, style, refactor, test, chore, ci, build"
+  echo "Scopes: plaid, gocardless, gmail, webhook, sync, storage, config, cli, tools, oauth"
+  echo ""
+  echo "Current message:"
+  echo "$COMMIT_MSG"
+  echo ""
+  echo "This is just a warning - commit will proceed."
+fi
+
+echo "✅ Commit message validation passed!"

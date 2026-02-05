@@ -1,0 +1,55 @@
+#!/usr/bin/env sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "🚀 Running pre-commit checks..."
+
+# Check for Chinese characters in code
+echo "🔍 Checking for Chinese characters in code..."
+STAGED_FILES=$(git diff --cached --name-only | grep -E '\.(ts|js|md)$' || true)
+
+if [ -n "$STAGED_FILES" ]; then
+  # Check for Chinese characters using Perl (uses Unicode range U+4E00-U+9FFF for CJK)
+  CHINESE_FOUND=$(echo "$STAGED_FILES" | while read -r file; do [ -f "$file" ] && echo "$file"; done | xargs perl -CSD -l -ne 'print $ARGV if /[\x{4e00}-\x{9fff}]/' 2>/dev/null | sort -u)
+
+  if [ $? -ne 0 ]; then
+    echo "❌ Error: Chinese character detection failed"
+    echo "Please ensure Perl is installed and supports Unicode (-CSD flag)"
+    exit 1
+  fi
+
+  if [ -n "$CHINESE_FOUND" ]; then
+    echo "❌ Chinese characters found in the following files:"
+    echo "$CHINESE_FOUND"
+    echo ""
+    echo "Please use English for all code comments and documentation."
+    echo "See .claude/hooks/naming.md for naming conventions."
+    exit 1
+  fi
+fi
+
+# Run linting
+echo "🔧 Running lint..."
+npm run lint --silent
+if [ $? -ne 0 ]; then
+  echo "❌ Lint check failed"
+  echo "Run 'npm run lint' to see issues"
+  exit 1
+fi
+
+# Run TypeScript type checking
+echo "📋 Running type check..."
+npx tsc --noEmit
+if [ $? -ne 0 ]; then
+  echo "❌ TypeScript type check failed"
+  exit 1
+fi
+
+# Run tests
+echo "🧪 Running tests..."
+npm test --silent -- --bail
+if [ $? -ne 0 ]; then
+  echo "❌ Tests failed"
+  exit 1
+fi
+
+echo "✅ All pre-commit checks passed!"
