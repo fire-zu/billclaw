@@ -2,9 +2,9 @@
  * Unit tests for Plaid sync tool
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { type Transaction } from "../storage/transaction-storage.js";
-import { AccountConfig, AccountType } from "../../config.js";
+import type { AccountConfig } from "../../config.js";
 
 // Mock the Plaid API responses
 const mockPlaidTransaction = {
@@ -53,7 +53,7 @@ describe("plaid-sync tool", () => {
     });
 
     it("should handle transactions without merchant name", () => {
-      const transactionWithoutMerchant = {
+      const _transactionWithoutMerchant = {
         ...mockPlaidTransaction,
         merchant_name: null,
         name: "POS TRANSACTION",
@@ -91,17 +91,15 @@ describe("plaid-sync tool", () => {
           warn: vi.fn(),
           debug: vi.fn(),
         },
-        config: {
-          get: vi.fn(() => ({})),
-        },
+        pluginConfig: {},
       };
 
-      // Verify the config.get was called
-      expect(mockContext.config.get).toBeDefined();
+      // Verify the context is structured correctly
+      expect(mockContext.logger.error).toBeDefined();
     });
 
     it("should handle Plaid API errors", async () => {
-      const mockError = new Error("Plaid API error");
+      const _mockError = new Error("Plaid API error");
 
       const mockContext = {
         logger: {
@@ -110,15 +108,13 @@ describe("plaid-sync tool", () => {
           warn: vi.fn(),
           debug: vi.fn(),
         },
-        config: {
-          get: vi.fn(() => ({
-            plaid: {
-              clientId: "test_client",
-              secret: "test_secret",
-              environment: "sandbox",
-            },
-            accounts: [],
-          })),
+        pluginConfig: {
+          plaid: {
+            clientId: "test_client",
+            secret: "test_secret",
+            environment: "sandbox",
+          },
+          accounts: [],
         },
       };
 
@@ -132,57 +128,57 @@ describe("plaid-sync tool", () => {
       const accounts: AccountConfig[] = [
         {
           id: "acc_1",
-          type: AccountType.Plaid,
+          type: "plaid",
           name: "Enabled Plaid Account",
           enabled: true,
-          syncFrequency: "daily" as any,
+          syncFrequency: "daily",
           plaidAccessToken: "access_token_1",
         },
         {
           id: "acc_2",
-          type: AccountType.Plaid,
+          type: "plaid",
           name: "Disabled Plaid Account",
           enabled: false,
-          syncFrequency: "daily" as any,
+          syncFrequency: "daily",
           plaidAccessToken: "access_token_2",
         },
         {
           id: "acc_3",
-          type: AccountType.Gmail,
+          type: "gmail",
           name: "Gmail Account",
           enabled: true,
-          syncFrequency: "daily" as any,
+          syncFrequency: "daily",
         },
         {
           id: "acc_4",
-          type: AccountType.Plaid,
+          type: "plaid",
           name: "Plaid Account without token",
           enabled: true,
-          syncFrequency: "daily" as any,
+          syncFrequency: "daily",
         },
       ];
 
       const plaidAccounts = accounts.filter(
-        (acc) => acc.type === AccountType.Plaid && acc.enabled && acc.plaidAccessToken
+        (acc) => acc.type === "plaid" && acc.enabled && acc.plaidAccessToken
       );
 
       expect(plaidAccounts).toHaveLength(1);
-      expect(plaidAccounts[0].id).toBe("acc_1");
+      expect(plaidAccounts[0]?.id).toBe("acc_1");
     });
 
     it("should return empty array when no Plaid accounts configured", () => {
       const accounts: AccountConfig[] = [
         {
           id: "acc_1",
-          type: AccountType.Gmail,
+          type: "gmail",
           name: "Gmail Account",
           enabled: true,
-          syncFrequency: "daily" as any,
+          syncFrequency: "daily",
         },
       ];
 
       const plaidAccounts = accounts.filter(
-        (acc) => acc.type === AccountType.Plaid && acc.enabled && acc.plaidAccessToken
+        (acc) => acc.type === "plaid" && acc.enabled && acc.plaidAccessToken
       );
 
       expect(plaidAccounts).toHaveLength(0);

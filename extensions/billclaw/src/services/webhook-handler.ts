@@ -2,37 +2,63 @@
  * Webhook handler - handles incoming webhooks from Plaid and Gmail
  */
 
-import type { ServiceContext, HttpRequest, HttpResponse } from "../../openclaw-types";
+import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
+import type { BillclawConfig } from "../../config.js";
 
 export interface WebhookPayload {
   event: string;
-  data: any;
+  data: unknown;
   timestamp: string;
   signature?: string;
 }
+
+export interface HttpRequest {
+  body: unknown;
+  headers: Record<string, string>;
+  query: Record<string, string>;
+}
+
+export interface HttpResponse {
+  status: number;
+  body: unknown;
+}
+
+let api: OpenClawPluginApi | null = null;
+let _plaidWebhookSecret: string | undefined;
+let _gmailWebhookSecret: string | undefined;
 
 /**
  * HTTP endpoint for handling Plaid and Gmail webhooks
  *
  * Verifies signatures and processes webhook events
  */
-export async function webhookHandler(context: ServiceContext): Promise<void> {
-  context.logger.info("billclaw webhook handler registered");
+export async function webhookHandler(context: OpenClawPluginApi): Promise<void> {
+  api = context;
+
+  const cfg = context.pluginConfig as BillclawConfig;
+
+  // Extract webhook secrets from config
+  if (cfg.plaid.secret) {
+    _plaidWebhookSecret = cfg.plaid.secret;
+  }
+  // Gmail webhook secret would be configured separately
+
+  context.logger.info?.("billclaw webhook handler registered");
 
   // Register HTTP routes for webhook endpoints
-  context.http.register({
+  context.http?.register({
     path: "/webhook/plaid",
     method: "POST",
     handler: handlePlaidWebhook,
   });
 
-  context.http.register({
+  context.http?.register({
     path: "/webhook/gmail",
     method: "POST",
     handler: handleGmailWebhook,
   });
 
-  context.http.register({
+  context.http?.register({
     path: "/webhook/test",
     method: "POST",
     handler: handleTestWebhook,
@@ -46,8 +72,7 @@ export async function webhookHandler(context: ServiceContext): Promise<void> {
  * Events: TRANSACTION, ITEM, BANK_TRANSFER, etc.
  */
 async function handlePlaidWebhook(
-  request: HttpRequest,
-  context?: ServiceContext
+  _request: HttpRequest
 ): Promise<HttpResponse> {
   try {
     // TODO: Implement Plaid webhook handling
@@ -64,7 +89,7 @@ async function handlePlaidWebhook(
       body: { received: true },
     };
   } catch (error) {
-    context?.logger.error("Plaid webhook error:", error);
+    api?.logger.error?.("Plaid webhook error:", error);
     return {
       status: 500,
       body: { error: "Webhook processing failed" },
@@ -78,8 +103,7 @@ async function handlePlaidWebhook(
  * Gmail push notifications via Google Cloud Pub/Sub
  */
 async function handleGmailWebhook(
-  request: HttpRequest,
-  context?: ServiceContext
+  _request: HttpRequest
 ): Promise<HttpResponse> {
   try {
     // TODO: Implement Gmail webhook handling
@@ -95,7 +119,7 @@ async function handleGmailWebhook(
       body: { received: true },
     };
   } catch (error) {
-    context?.logger.error("Gmail webhook error:", error);
+    api?.logger.error?.("Gmail webhook error:", error);
     return {
       status: 500,
       body: { error: "Webhook processing failed" },
@@ -109,30 +133,23 @@ async function handleGmailWebhook(
  * Allows users to test their webhook configuration
  */
 async function handleTestWebhook(
-  request: HttpRequest,
-  context?: ServiceContext
+  _request: HttpRequest
 ): Promise<HttpResponse> {
-  try {
-    // TODO: Implement test webhook
-    // Send a test event to configured webhooks
-    // Event type: webhook.test
+  // TODO: Implement test webhook
+  // Send a test event to configured webhooks
+  // Event type: webhook.test
 
-    return {
-      status: 200,
-      body: { test: "success" },
-    };
-  } catch (error) {
-    return {
-      status: 500,
-      body: { error: "Test failed" },
-    };
-  }
+  return {
+    status: 200,
+    body: { test: "success" },
+  };
 }
 
 /**
  * Verify webhook signature
  */
-function verifySignature(payload: string, signature: string, secret: string): boolean {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function verifySignature(_payload: string, _signature: string, _secret: string): boolean {
   // TODO: Implement HMAC-SHA256 verification
   // 1. Compute HMAC-SHA256 of payload using secret
   // 2. Compare with provided signature (timing-safe)
@@ -143,7 +160,8 @@ function verifySignature(payload: string, signature: string, secret: string): bo
 /**
  * Forward event to user-configured webhooks
  */
-async function forwardToWebhooks(event: any, context: ServiceContext): Promise<void> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function forwardToWebhooks(_event: unknown): Promise<void> {
   // TODO: Implement webhook forwarding
   // 1. Load configured webhooks
   // 2. For each webhook with matching event subscription:

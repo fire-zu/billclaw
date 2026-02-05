@@ -2,7 +2,8 @@
  * Plaid OAuth handler - implements Plaid Link flow
  */
 
-import type { OAuthContext } from "../../openclaw-types";
+import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
+import type { BillclawConfig } from "../../config.js";
 import { Configuration, PlaidApi, PlaidEnvironments } from "plaid";
 import type {
   LinkTokenCreateRequest,
@@ -27,12 +28,12 @@ export interface CreateLinkTokenResult {
 /**
  * Get Plaid configuration from OpenClaw config
  */
-function getPlaidConfig(context: OAuthContext): {
+function getPlaidConfig(context: OpenClawPluginApi): {
   clientId: string;
   secret: string;
   environment: string;
 } {
-  const config = context.config.get("billclaw") as any;
+  const config = context.pluginConfig as BillclawConfig;
   const plaidConfig = config?.plaid || {};
 
   const clientId = plaidConfig.clientId || process.env.PLAID_CLIENT_ID;
@@ -62,7 +63,7 @@ function getPlaidConfig(context: OAuthContext): {
  * Create Plaid Link token for initializing Link frontend
  */
 export async function createLinkToken(
-  context: OAuthContext,
+  context: OpenClawPluginApi,
   accountId?: string
 ): Promise<CreateLinkTokenResult> {
   try {
@@ -112,7 +113,7 @@ export async function createLinkToken(
  * Exchange Plaid public token for access token
  */
 export async function exchangePublicToken(
-  context: OAuthContext,
+  context: OpenClawPluginApi,
   publicToken: string
 ): Promise<{ accessToken: string; itemId: string } | null> {
   try {
@@ -163,7 +164,7 @@ export async function exchangePublicToken(
  * 5. Return itemId and accessToken for storage
  */
 export async function plaidOAuth(
-  context: OAuthContext,
+  context: OpenClawPluginApi,
   publicToken?: string
 ): Promise<PlaidOAuthResult> {
   if (!publicToken) {

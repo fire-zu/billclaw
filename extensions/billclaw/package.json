@@ -12,8 +12,7 @@
     }
   },
   "files": [
-    "dist",
-    "openclaw.plugin.json"
+    "dist"
   ],
   "scripts": {
     "build": "tsc",
@@ -49,7 +48,15 @@
     "vitest": "^3.0.0"
   },
   "dependencies": {
-    "plaid": "^32.0.0",
-    "zod": "^3.24.0"
+    "@sinclair/typebox": "^0.34.48",
+    "plaid": "^32.0.0"
+  },
+  "peerDependencies": {
+    "openclaw": "workspace:*"
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
   }
 }

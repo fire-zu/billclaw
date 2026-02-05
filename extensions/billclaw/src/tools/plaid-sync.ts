@@ -2,19 +2,18 @@
  * Plaid sync tool - syncs transactions from Plaid-connected accounts
  */
 
-import type { ToolContext } from "../../openclaw-types";
+import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { Configuration, PlaidApi, PlaidEnvironments } from "plaid";
 import type {
   TransactionsSyncRequest,
   TransactionsSyncResponse,
 } from "plaid";
-import { AccountConfig, AccountType } from "../../config.js";
+import type { BillclawConfig } from "../../config.js";
 import type { StorageConfig } from "../storage/transaction-storage.js";
 import { Transaction, SyncState } from "../storage/transaction-storage.js";
 import {
   appendTransactions,
   deduplicateTransactions,
-  readGlobalCursor,
   readSyncStates,
   writeGlobalCursor,
   writeSyncState,
@@ -36,12 +35,12 @@ export interface PlaidSyncResult {
 /**
  * Get Plaid client configuration
  */
-function getPlaidConfig(context: ToolContext): {
+function getPlaidConfig(context: OpenClawPluginApi): {
   clientId: string;
   secret: string;
   environment: string;
 } {
-  const config = context.config.get("billclaw") as any;
+  const config = context.pluginConfig as BillclawConfig;
   const plaidConfig = config?.plaid || {};
 
   const clientId = plaidConfig.clientId || process.env.PLAID_CLIENT_ID;
@@ -70,7 +69,7 @@ function getPlaidConfig(context: ToolContext): {
 /**
  * Create Plaid API client
  */
-function createPlaidClient(context: ToolContext): PlaidApi {
+function createPlaidClient(context: OpenClawPluginApi): PlaidApi {
   const { clientId, secret, environment } = getPlaidConfig(context);
 
   const configuration = new Configuration({
@@ -112,8 +111,8 @@ function convertTransaction(
  * Sync transactions from a single Plaid account
  */
 async function syncAccount(
-  context: ToolContext,
-  account: AccountConfig,
+  context: OpenClawPluginApi,
+  account: { id: string; plaidAccessToken?: string },
   storageConfig: StorageConfig
 ): Promise<PlaidSyncResult> {
   const errors: string[] = [];
@@ -224,16 +223,16 @@ async function syncAccount(
  * Sync transactions from Plaid for a specific account or all accounts
  */
 export async function plaidSyncTool(
-  context: ToolContext,
+  context: OpenClawPluginApi,
   params: PlaidSyncParams
 ): Promise<PlaidSyncResult> {
-  const config = context.config.get("billclaw") as any;
-  const accounts: AccountConfig[] = config?.accounts || [];
+  const config = context.pluginConfig as BillclawConfig;
+  const accounts = config?.accounts || [];
   const storageConfig: StorageConfig = config?.storage || {};
 
   // Filter for Plaid accounts
   const plaidAccounts = accounts.filter(
-    (acc) => acc.type === AccountType.Plaid && acc.enabled && acc.plaidAccessToken
+    (acc) => acc.type === "plaid" && acc.enabled && acc.plaidAccessToken
   );
 
   if (plaidAccounts.length === 0) {

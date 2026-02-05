@@ -42,7 +42,7 @@ export async function billParseTool(params: BillParseParams): Promise<BillParseR
 /**
  * Parse Plaid API response data
  */
-async function parsePlaidData(data: string): Promise<BillParseResult> {
+async function parsePlaidData(_data: string): Promise<BillParseResult> {
   // TODO: Parse Plaid transaction format
   return {
     success: false,
@@ -55,7 +55,7 @@ async function parsePlaidData(data: string): Promise<BillParseResult> {
 /**
  * Parse Gmail email content for bills
  */
-async function parseGmailEmail(data: string): Promise<BillParseResult> {
+async function parseGmailEmail(_data: string): Promise<BillParseResult> {
   // TODO: Parse Gmail email for bill data
   return {
     success: false,
@@ -68,7 +68,7 @@ async function parseGmailEmail(data: string): Promise<BillParseResult> {
 /**
  * Parse bill file (PDF, CSV, etc.)
  */
-async function parseFile(filePath: string): Promise<BillParseResult> {
+async function parseFile(_filePath: string): Promise<BillParseResult> {
   // TODO: Parse various file formats
   // - PDF: Use pdf-parse or similar
   // - CSV: Use csv-parser
@@ -84,7 +84,7 @@ async function parseFile(filePath: string): Promise<BillParseResult> {
 /**
  * Parse raw email content
  */
-async function parseEmail(data: string): Promise<BillParseResult> {
+async function parseEmail(_data: string): Promise<BillParseResult> {
   // TODO: Parse email for bill data
   return {
     success: false,

@@ -38,7 +38,7 @@ fi
 
 # Run TypeScript type checking
 echo "📋 Running type check..."
-npx tsc --noEmit
+cd "$(git rev-parse --show-toplevel)/extensions/billclaw" && npx tsc --noEmit
 if [ $? -ne 0 ]; then
   echo "❌ TypeScript type check failed"
   exit 1
@@ -46,7 +46,7 @@ fi
 
 # Run tests
 echo "🧪 Running tests..."
-npm test --silent -- --bail
+cd "$(git rev-parse --show-toplevel)/extensions/billclaw" && npm test --silent --run
 if [ $? -ne 0 ]; then
   echo "❌ Tests failed"
   exit 1

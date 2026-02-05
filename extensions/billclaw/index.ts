@@ -8,152 +8,173 @@
  * @license MIT
  */
 
-import type {
-  Plugin,
-  CLIRegistry,
-  ToolRegistry,
-  OAuthRegistry,
-  ServiceRegistry,
-} from "./openclaw-types";
+import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
+import { Type } from "@sinclair/typebox";
+import { billclawConfigSchema } from "./config.js";
 
-export const billclawPlugin: Plugin = {
-  name: "@fire-zu/billclaw",
-  version: "0.0.1",
+// ============================================================================
+// Plugin Definition
+// ============================================================================
 
-  // Register CLI commands
-  async registerCLI(cli: CLIRegistry) {
-    cli.registerCommand({
-      name: "bills",
-      description: "Manage bank account connections and transaction imports",
-      subcommands: {
-        setup: {
-          description: "Interactive setup wizard for connecting bank accounts",
-          handler: async () => {
+const billclawPlugin = {
+  id: "billclaw",
+  name: "BillClaw",
+  description: "Bank transaction and bill data import with data sovereignty",
+  kind: "integrations" as const,
+  configSchema: billclawConfigSchema,
+
+  register(api: OpenClawPluginApi) {
+    const cfg = billclawConfigSchema.parse(api.pluginConfig);
+
+    api.logger.info(`billclaw: plugin registered (${cfg.accounts.length} accounts configured)`);
+
+    // ========================================================================
+    // Tools
+    // ========================================================================
+
+    api.registerTool(
+      {
+        name: "plaid_sync",
+        label: "Plaid Sync",
+        description:
+          "Sync transactions from Plaid-connected bank accounts. Use this to fetch the latest transactions from configured bank accounts.",
+        parameters: Type.Object({
+          accountId: Type.Optional(
+            Type.String({ description: "Specific account ID to sync (omits to sync all)" }),
+          ),
+        }),
+        async execute(_toolCallId, params) {
+          const { plaidSyncTool } = await import("./src/tools/plaid-sync.js");
+          return plaidSyncTool(api, params as { accountId?: string });
+        },
+      },
+      { name: "plaid_sync" },
+    );
+
+    api.registerTool(
+      {
+        name: "gmail_fetch_bills",
+        label: "Gmail Fetch Bills",
+        description: "Fetch and parse bills from Gmail",
+        parameters: Type.Object({
+          days: Type.Optional(
+            Type.Number({ description: "Number of days to look back (default: 30)" }),
+          ),
+        }),
+        async execute(_toolCallId, params) {
+          const { gmailFetchTool } = await import("./src/tools/gmail-fetch.js");
+          return gmailFetchTool(params as { days?: number });
+        },
+      },
+      { name: "gmail_fetch_bills" },
+    );
+
+    api.registerTool(
+      {
+        name: "bill_parse",
+        label: "Bill Parse",
+        description: "Parse bill data from various formats (PDF, CSV, email)",
+        parameters: Type.Object({
+          source: Type.String({
+            description: "Source type: plaid, gmail, file, or email",
+          }),
+          data: Type.String({ description: "Raw data or file path to parse" }),
+        }),
+        async execute(_toolCallId, params) {
+          const { billParseTool } = await import("./src/tools/bill-parse.js");
+          return billParseTool(params as never);
+        },
+      },
+      { name: "bill_parse" },
+    );
+
+    // ========================================================================
+    // CLI Commands
+    // ========================================================================
+
+    api.registerCli(
+      ({ program }: { program: any }) => {
+        const bills = program
+          .command("bills")
+          .description("Manage bank account connections and transaction imports");
+
+        bills
+          .command("setup")
+          .description("Interactive setup wizard for connecting bank accounts")
+          .action(async () => {
             const { setupWizard } = await import("./src/cli/commands.js");
             return setupWizard();
-          },
-        },
-        sync: {
-          description: "Manually trigger transaction sync for all connected accounts",
-          handler: async (args: { accountId?: string }) => {
+          });
+
+        bills
+          .command("sync")
+          .description("Manually trigger transaction sync for all connected accounts")
+          .argument("[accountId]", "Specific account ID to sync")
+          .action(async (accountId = undefined) => {
             const { syncCommand } = await import("./src/cli/commands.js");
-            return syncCommand(args.accountId);
-          },
-        },
-        status: {
-          description: "Show connection status and recent sync results",
-          handler: async () => {
+            return syncCommand(accountId);
+          });
+
+        bills
+          .command("status")
+          .description("Show connection status and recent sync results")
+          .action(async () => {
             const { statusCommand } = await import("./src/cli/commands.js");
             return statusCommand();
-          },
-        },
-        config: {
-          description: "Manage plugin configuration",
-          handler: async (args: { key?: string; value?: string }) => {
+          });
+
+        bills
+          .command("config")
+          .description("Manage plugin configuration")
+          .argument("[key]", "Config key to view/set")
+          .argument("[value]", "Config value to set")
+          .action(async (key = undefined, value = undefined) => {
             const { configCommand } = await import("./src/cli/commands.js");
-            return configCommand(args);
-          },
-        },
+            return configCommand({ key, value });
+          });
       },
-    });
-  },
+      { commands: ["bills", "bills:setup", "bills:sync", "bills:status", "bills:config"] },
+    );
 
-  // Register Agent tools
-  async registerTools(tools: ToolRegistry) {
-    tools.register({
-      name: "plaid_sync",
-      description: "Sync transactions from Plaid-connected bank accounts",
-      parameters: {
-        type: "object",
-        properties: {
-          accountId: {
-            type: "string",
-            description: "Optional: specific account ID to sync (omits to sync all)",
-          },
-        },
-      },
-      handler: async (params: any, context: any) => {
-        const { plaidSyncTool } = await import("./src/tools/plaid-sync.js");
-        return plaidSyncTool(context, params);
-      },
-    });
+    // ========================================================================
+    // OAuth Providers
+    // ========================================================================
 
-    tools.register({
-      name: "gmail_fetch_bills",
-      description: "Fetch and parse bills from Gmail",
-      parameters: {
-        type: "object",
-        properties: {
-          days: {
-            type: "number",
-            description: "Number of days to look back (default: 30)",
-          },
-        },
-      },
-      handler: async (params: any) => {
-        const { gmailFetchTool } = await import("./src/tools/gmail-fetch.js");
-        return gmailFetchTool(params);
-      },
-    });
-
-    tools.register({
-      name: "bill_parse",
-      description: "Parse bill data from various formats (PDF, CSV, email)",
-      parameters: {
-        type: "object",
-        properties: {
-          source: {
-            type: "string",
-            description: "Source type: plaid, gmail, file, or email",
-          },
-          data: {
-            type: "string",
-            description: "Raw data or file path to parse",
-          },
-        },
-        required: ["source", "data"],
-      },
-      handler: async (params: any) => {
-        const { billParseTool } = await import("./src/tools/bill-parse.js");
-        return billParseTool(params);
-      },
-    });
-  },
-
-  // Register OAuth providers
-  async registerOAuth(oauth: OAuthRegistry) {
-    oauth.register({
+    api.registerOAuth({
       name: "plaid",
       description: "Plaid Link OAuth flow for connecting bank accounts",
-      handler: async (context: any) => {
+      handler: async (context) => {
         const { plaidOAuth } = await import("./src/oauth/plaid.js");
         return plaidOAuth(context);
       },
     });
-  },
 
-  // Register background services
-  async registerServices(services: ServiceRegistry) {
-    services.register({
-      name: "sync-service",
-      description: "Background service for automatic transaction synchronization",
-      handler: async (context: any) => {
+    // ========================================================================
+    // Background Services
+    // ========================================================================
+
+    api.registerService({
+      id: "billclaw-sync",
+      start: async () => {
         const { syncService } = await import("./src/services/sync-service.js");
-        return syncService(context);
+        await syncService(api);
+        api.logger.info("billclaw: sync service started");
+      },
+      stop: async () => {
+        api.logger.info("billclaw: sync service stopped");
       },
     });
 
-    services.register({
-      name: "webhook-handler",
-      description: "HTTP endpoint for handling Plaid and Gmail webhooks",
-      handler: async (context: any) => {
+    api.registerService({
+      id: "billclaw-webhook",
+      start: async () => {
         const { webhookHandler } = await import("./src/services/webhook-handler.js");
-        return webhookHandler(context);
+        await webhookHandler(api);
+        api.logger.info("billclaw: webhook handler started");
       },
-      routes: [
-        { path: "/webhook/plaid", method: "POST" },
-        { path: "/webhook/gmail", method: "POST" },
-      ],
+      stop: async () => {
+        api.logger.info("billclaw: webhook handler stopped");
+      },
     });
   },
 };

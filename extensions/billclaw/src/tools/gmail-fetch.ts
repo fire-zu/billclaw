@@ -17,7 +17,7 @@ export interface GmailFetchResult {
  * Fetch bills from Gmail for the specified time period
  */
 export async function gmailFetchTool(params: GmailFetchParams = {}): Promise<GmailFetchResult> {
-  const days = params.days ?? 30;
+  const _days = params.days ?? 30;
 
   // TODO: Implement Gmail bill fetching
   // 1. Use OpenClaw's existing Gmail integration
@@ -37,7 +37,8 @@ export async function gmailFetchTool(params: GmailFetchParams = {}): Promise<Gma
 /**
  * Internal helper: parse bill from email content
  */
-async function parseBillFromEmail(email: any): Promise<any> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function parseBillFromEmail(_email: unknown): Promise<unknown> {
   // TODO: Implement bill parsing
   // Common bill formats:
   // - Credit card statements

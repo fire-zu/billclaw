@@ -4,7 +4,9 @@
   "description": "Bank transaction and bill data import for OpenClaw - Data sovereignty for your financial data",
   "private": true,
   "scripts": {
-    "prepare": "husky .husky"
+    "prepare": "husky .husky",
+    "lint": "cd extensions/billclaw && npm run lint",
+    "test": "cd extensions/billclaw && npm run lint"
   },
   "devDependencies": {
     "husky": "^9.1.7"

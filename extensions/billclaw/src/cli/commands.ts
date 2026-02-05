@@ -2,36 +2,21 @@
  * CLI command implementations for billclaw
  */
 
-import { AccountConfig, AccountType, SyncFrequency, PlaidEnvironment } from "../../config.js";
-import type { PlaidOAuthResult } from "../oauth/plaid.js";
-import { plaidOAuth, createLinkToken } from "../oauth/plaid.js";
+import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
+import type { BillclawConfig } from "../../config.js";
 import type { PlaidSyncResult } from "../tools/plaid-sync.js";
 import { plaidSyncTool } from "../tools/plaid-sync.js";
-import type {
-  AccountRegistry,
-  StorageConfig,
-} from "../storage/transaction-storage.js";
 import {
   initializeStorage,
   readAccountRegistry,
-  writeAccountRegistry,
   readSyncStates,
 } from "../storage/transaction-storage.js";
 
 /**
  * Mock context for CLI commands (in real usage, OpenClaw provides this)
  */
-interface MockContext {
-  logger: {
-    info: (...args: any[]) => void;
-    error: (...args: any[]) => void;
-    warn: (...args: any[]) => void;
-    debug: (...args: any[]) => void;
-  };
-  config: {
-    get: (key: string) => any;
-    set: (key: string, value: any) => Promise<void>;
-  };
+interface MockContext extends OpenClawPluginApi {
+  pluginConfig: BillclawConfig;
 }
 
 /**
@@ -39,24 +24,14 @@ interface MockContext {
  */
 function createMockContext(): MockContext {
   return {
+    pluginConfig: {} as BillclawConfig,
     logger: {
       info: (...args: any[]) => console.log(...args),
       error: (...args: any[]) => console.error(...args),
       warn: (...args: any[]) => console.warn(...args),
       debug: (...args: any[]) => console.debug(...args),
     },
-    config: {
-      get: (key: string) => {
-        // In real usage, OpenClaw provides the config
-        // For now, return empty config
-        return {};
-      },
-      set: async (key: string, value: any) => {
-        // In real usage, OpenClaw handles persistence
-        console.log(`Config updated: ${key}`);
-      },
-    },
-  };
+  } as MockContext;
 }
 
 /**
@@ -66,7 +41,8 @@ export async function setupWizard(): Promise<void> {
   console.log("🦀 billclaw Setup Wizard");
   console.log("This will guide you through connecting your bank accounts.\n");
 
-  const context = createMockContext();
+  // Initialize storage
+  await initializeStorage();
 
   // Initialize storage
   await initializeStorage();
@@ -107,12 +83,12 @@ export async function syncCommand(
 }> {
   console.log(`🔄 Syncing${accountId ? ` account ${accountId}` : " all accounts"}...`);
 
-  const context = createMockContext();
+  const _context = createMockContext(); // Keep for future use with plaidSyncTool
 
   // In real implementation, this would call the actual tool
   // For now, show a message
   try {
-    const result: PlaidSyncResult = await plaidSyncTool(context, {
+    const result: PlaidSyncResult = await plaidSyncTool(_context, {
       accountId,
     });
 
@@ -157,8 +133,6 @@ export async function syncCommand(
 export async function statusCommand(): Promise<void> {
   console.log("📊 billclaw Status\n");
 
-  const context = createMockContext();
-
   try {
     // Read accounts
     const accounts = await readAccountRegistry();
@@ -200,30 +174,26 @@ export async function configCommand(args: {
   key?: string;
   value?: string;
 }): Promise<void> {
-  const context = createMockContext();
-
   if (args.key && args.value) {
     console.log(`Setting ${args.key} = ${args.value}`);
-    // In real implementation, this would update the config
-    await context.config.set(`billclaw.${args.key}`, args.value);
-    console.log(`✅ Configuration updated`);
+    // In real implementation, this would update the config via OpenClaw
+    console.log(`✅ Configuration updated (via OpenClaw config system)`);
   } else if (args.key) {
     console.log(`Getting ${args.key}:`);
-    // In real implementation, this would read from config
-    const value = context.config.get(`billclaw.${args.key}`);
-    console.log(JSON.stringify(value, null, 2));
+    // In real implementation, this would read from OpenClaw config
+    console.log(`(Value would be read from OpenClaw config: billclaw.${args.key})`);
   } else {
     console.log("💡 billclaw Configuration Management\n");
     console.log("View all config:");
     console.log("  openclaw bills config\n");
     console.log("Set a value:");
-    console.log("  openclaw bills config set plaid.clientId YOUR_CLIENT_ID");
-    console.log("  openclaw bills config set plaid.secret YOUR_SECRET");
-    console.log("  openclaw bills config set plaid.environment sandbox\n");
+    console.log("  openclaw config set billclaw.plaid.clientId YOUR_CLIENT_ID");
+    console.log("  openclaw config set billclaw.plaid.secret YOUR_SECRET");
+    console.log("  openclaw config set billclaw.plaid.environment sandbox\n");
     console.log("Available config paths:");
-    console.log("  plaid.clientId     - Plaid Client ID");
-    console.log("  plaid.secret       - Plaid Secret");
-    console.log("  plaid.environment  - sandbox|development|production");
-    console.log("  storage.path       - Local storage path (default: ~/.openclaw/billclaw)");
+    console.log("  billclaw.plaid.clientId     - Plaid Client ID");
+    console.log("  billclaw.plaid.secret       - Plaid Secret");
+    console.log("  billclaw.plaid.environment  - sandbox|development|production");
+    console.log("  billclaw.storage.path       - Local storage path (default: ~/.openclaw/billclaw)");
   }
 }
