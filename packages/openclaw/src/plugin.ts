@@ -15,6 +15,7 @@ import {
   conversationalStatusTool,
   conversationalHelpTool,
 } from "./tools/index.js";
+import { registerWebhookHandlers } from "./services/webhook-handler.js";
 
 /**
  * BillClaw OpenClaw plugin
@@ -158,13 +159,11 @@ export default {
     api.registerOAuth({
       name: "plaid",
       description: "Plaid Link OAuth flow for connecting bank accounts",
-      handler: async (_context) => {
+      handler: async (context) => {
         api.logger.info?.("Plaid OAuth initiated");
-        // TODO: Implement Plaid Link OAuth flow
-        return {
-          url: "https://cdn.plaid.com/link/v2/stable/link.html",
-          token: "public-token-placeholder",
-        };
+        const { plaidOAuthHandler } = await import("./oauth/plaid.js");
+        const publicToken = context?.publicToken as string | undefined;
+        return plaidOAuthHandler(api, publicToken);
       },
     });
 
@@ -179,6 +178,18 @@ export default {
           token: "oauth-token-placeholder",
         };
       },
+    });
+
+    // ========================================================================
+    // Webhook Handlers
+    // ========================================================================
+
+    const cfg = api.pluginConfig as any;
+    const plaidSecret = cfg.plaid?.webhookSecret || process.env.PLAID_WEBHOOK_SECRET;
+
+    registerWebhookHandlers({
+      api,
+      plaidWebhookSecret: plaidSecret,
     });
 
     // ========================================================================

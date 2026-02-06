@@ -167,7 +167,13 @@ export class Billclaw {
       return [];
     }
 
-    return syncPlaidAccounts(accounts, plaidConfig, storageConfig, this.logger);
+    return syncPlaidAccounts(
+      accounts,
+      plaidConfig,
+      storageConfig,
+      this.logger,
+      config.webhooks || []
+    );
   }
 
   /**

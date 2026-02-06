@@ -7,7 +7,7 @@ import type {
   TransactionsSyncRequest,
   TransactionsSyncResponse,
 } from "plaid";
-import type { StorageConfig } from "../../models/config.js";
+import type { StorageConfig, WebhookConfig } from "../../models/config.js";
 import type { Transaction, SyncState } from "../../storage/transaction-storage.js";
 import type { Logger } from "../../errors/errors.js";
 import {
@@ -17,6 +17,7 @@ import {
   writeGlobalCursor,
   writeSyncState,
 } from "../../storage/transaction-storage.js";
+import { emitEvent } from "../../services/event-emitter.js";
 
 export interface PlaidConfig {
   clientId: string;
@@ -93,7 +94,8 @@ export async function syncPlaidAccount(
   account: PlaidAccount,
   plaidClient: PlaidApi,
   storageConfig: StorageConfig,
-  logger: Logger
+  logger: Logger,
+  webhooks: WebhookConfig[] = []
 ): Promise<PlaidSyncResult> {
   const errors: string[] = [];
   let transactionsAdded = 0;
@@ -111,6 +113,10 @@ export async function syncPlaidAccount(
     transactionsUpdated: 0,
     cursor: "",
   };
+
+  // Emit sync.started event (fire-and-forget)
+  emitEvent(logger, webhooks, "sync.started", { accountId: account.id, syncId })
+    .catch((err) => logger.debug?.(`Event emission failed:`, err));
 
   try {
     // Get previous sync state for cursor
@@ -178,12 +184,29 @@ export async function syncPlaidAccount(
     logger.info?.(
       `Sync completed for ${account.id}: ${transactionsAdded} added, ${transactionsUpdated} updated`
     );
+
+    // Emit sync.completed event (fire-and-forget)
+    const syncDuration = Date.now() - new Date(syncState.startedAt).getTime();
+    emitEvent(logger, webhooks, "sync.completed", {
+      accountId: account.id,
+      syncId,
+      transactionsAdded,
+      transactionsUpdated,
+      duration: syncDuration,
+    }).catch((err) => logger.debug?.(`Event emission failed:`, err));
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : "Unknown error";
     errors.push(errorMsg);
     syncState.status = "failed";
     syncState.error = errorMsg;
     logger.error?.(`Sync failed for ${account.id}:`, error);
+
+    // Emit sync.failed event (fire-and-forget)
+    emitEvent(logger, webhooks, "sync.failed", {
+      accountId: account.id,
+      syncId,
+      error: errorMsg,
+    }).catch((err) => logger.debug?.(`Event emission failed:`, err));
 
     // Check for Plaid-specific errors that require user action
     if (error && typeof error === "object") {
@@ -227,7 +250,8 @@ export async function syncPlaidAccounts(
   accounts: PlaidAccount[],
   plaidConfig: PlaidConfig,
   storageConfig: StorageConfig,
-  logger: Logger
+  logger: Logger,
+  webhooks: WebhookConfig[] = []
 ): Promise<PlaidSyncResult[]> {
   if (accounts.length === 0) {
     return [];
@@ -237,7 +261,7 @@ export async function syncPlaidAccounts(
   const results: PlaidSyncResult[] = [];
 
   for (const account of accounts) {
-    const result = await syncPlaidAccount(account, plaidClient, storageConfig, logger);
+    const result = await syncPlaidAccount(account, plaidClient, storageConfig, logger, webhooks);
     results.push(result);
   }
 

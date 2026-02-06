@@ -67,5 +67,8 @@ export * from './security/index.js';
 // Runtime abstractions
 export * from './runtime/index.js';
 
+// Services (event emission, webhooks)
+export * from './services/index.js';
+
 // Version
 export const VERSION = '0.0.1' as const;

@@ -5,6 +5,24 @@
  * In production, the actual @types/openclaw package should be used.
  */
 
+export interface HttpRequest {
+  body: unknown;
+  headers: Record<string, string>;
+  query: Record<string, string>;
+}
+
+export interface HttpResponse {
+  status: number;
+  body: unknown;
+}
+
+export interface HttpRouteRegistration {
+  path: string;
+  method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
+  description?: string;
+  handler: (request: HttpRequest) => Promise<HttpResponse> | HttpResponse;
+}
+
 export interface OpenClawPluginApi {
   logger: {
     info?: (...args: unknown[]) => void;
@@ -18,6 +36,11 @@ export interface OpenClawPluginApi {
   registerCli(cli: CliRegistration): void;
   registerOAuth(oauth: OAuthRegistration): void;
   registerService(service: ServiceRegistration): void;
+
+  // HTTP route registration (optional - not all adapters support HTTP)
+  http?: {
+    register(route: HttpRouteRegistration): void;
+  };
 }
 
 export interface ToolRegistration {
