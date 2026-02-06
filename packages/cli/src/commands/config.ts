@@ -12,7 +12,7 @@ import { success, error } from "../utils/format.js"
  */
 async function runConfig(
   context: CliContext,
-  args?: { key?: string value?: string list?: boolean },
+  args?: { key?: string; value?: string; list?: boolean },
 ): Promise<void> {
   const { runtime } = context
 

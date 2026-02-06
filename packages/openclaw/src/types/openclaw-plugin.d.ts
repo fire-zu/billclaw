@@ -52,7 +52,7 @@ export interface ToolRegistration {
 }
 
 export interface ToolReturn {
-  content: Array<{ type: string text: string }>
+  content: Array<{ type: string; text: string }>
 }
 
 export interface CliRegistration {

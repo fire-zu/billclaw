@@ -217,7 +217,7 @@ async function exchangeCodeForToken(
  */
 export async function gmailOAuthHandler(
   api: OpenClawPluginApi,
-  context?: { code?: string state?: string redirectUri?: string },
+  context?: { code?: string; state?: string; redirectUri?: string },
 ): Promise<{
   url: string
   state?: string

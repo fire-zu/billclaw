@@ -14,7 +14,7 @@ import { Billclaw } from "@fire-zu/billclaw-core"
  */
 async function runSync(
   context: CliContext,
-  args: { account?: string all?: boolean },
+  args: { account?: string; all?: boolean },
 ): Promise<void> {
   const { runtime } = context
   const billclaw = new Billclaw(runtime)
@@ -176,5 +176,5 @@ export const syncCommand: CliCommand = {
     },
   ],
   handler: (context, args) =>
-    runSync(context, args as { account?: string all?: boolean }),
+    runSync(context, args as { account?: string; all?: boolean }),
 }

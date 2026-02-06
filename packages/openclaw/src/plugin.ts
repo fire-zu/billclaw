@@ -16,6 +16,7 @@ import {
   conversationalHelpTool,
 } from "./tools/index.js"
 import { registerWebhookHandlers } from "./services/webhook-handler.js"
+import { runSetupWizard } from "./setup/index.js"
 
 /**
  * BillClaw OpenClaw plugin
@@ -114,10 +115,20 @@ export default {
         bills
           .command("setup")
           .description("Interactive setup wizard for connecting accounts")
-          .action(async () => {
+          .argument("[provider]", "Provider to setup (plaid, gmail, gocardless)")
+          .option("--client-id <id>", "API Client ID")
+          .option("--secret <secret>", "API Secret")
+          .option("--environment <env>", "API Environment")
+          .action(async (provider = undefined, options?: Record<string, unknown>) => {
             api.logger.info?.("Running setup wizard...")
-            // TODO: Implement setup wizard
-            return { message: "Setup wizard not yet implemented" }
+            const result = await runSetupWizard(api, provider, options)
+            if (result.nextSteps) {
+              return {
+                message: result.message,
+                nextSteps: result.nextSteps.join("\n"),
+              }
+            }
+            return { message: result.message }
           })
 
         bills

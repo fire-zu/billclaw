@@ -454,7 +454,7 @@ function generateEventId(): string {
  */
 export function isTransactionEvent(
   event: BillclawEvent,
-): event is TransactionEvent {
+): event is BillclawEvent & { data: TransactionEventData } {
   return (
     event.event === "transaction.new" ||
     event.event === "transaction.updated" ||
@@ -465,7 +465,9 @@ export function isTransactionEvent(
 /**
  * Type guard to check if an event is a sync event
  */
-export function isSyncEvent(event: BillclawEvent): event is SyncEvent {
+export function isSyncEvent(
+  event: BillclawEvent,
+): event is BillclawEvent & { data: SyncEventData } {
   return (
     event.event === "sync.started" ||
     event.event === "sync.completed" ||
@@ -478,7 +480,7 @@ export function isSyncEvent(event: BillclawEvent): event is SyncEvent {
  */
 export function isAccountEvent(
   event: BillclawEvent,
-): event is AccountEvent {
+): event is BillclawEvent & { data: AccountEventData } {
   return (
     event.event === "account.connected" ||
     event.event === "account.disconnected" ||
