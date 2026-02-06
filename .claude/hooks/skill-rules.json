@@ -69,6 +69,45 @@
         "(create|创建).*(plan|计划).*(with.*files|文件)"
       ],
       "priority": "critical"
+    },
+    {
+      "name": "billclaw-architecture",
+      "description": "BillClaw Multi-Platform Plugin Architecture - Framework-agnostic core with OpenClaw and CLI adapters. Understanding monorepo structure, runtime abstractions, and package dependencies.",
+      "auto_invoke": true,
+      "skill_path": "billclaw-architecture/SKILL.md",
+      "keywords": [
+        "billclaw",
+        "monorepo",
+        "architecture",
+        "架构",
+        "package structure",
+        "包结构",
+        "framework-agnostic",
+        "runtime context",
+        "adapter pattern",
+        "适配器",
+        "plaid sync",
+        "gmail fetch",
+        "transaction storage",
+        "核心包",
+        "core package",
+        "openclaw adapter"
+      ],
+      "intent_patterns": [
+        "(billclaw).*(architecture|架构|structure|结构|design|设计)",
+        "(billclaw).*(package|包).*(structure|结构|组织)",
+        "(billclaw).*(monorepo|mono.*repo)",
+        "(understand|理解|explain|解释).*(billclaw).*(architecture|架构)",
+        "(add|添加|create|创建).*(feature|功能).*(to|到).*(billclaw)",
+        "(implement|实现).*(billclaw).*(adapter|适配器)",
+        "(billclaw).*(core|核心|cli|openclaw)",
+        "(runtime|运行时).*(context|上下文|abstraction|抽象)",
+        "(transaction|交易).*(storage|存储|sync|同步)",
+        "(plaid|gmail).*(integration|集成|sync|同步)",
+        "(framework.*agnostic|框架无关)",
+        "(adapter|适配器).*(pattern|模式)"
+      ],
+      "priority": "high"
     }
   ]
 }
