@@ -8,7 +8,7 @@ import {
   OpenClawLogger,
   OpenClawConfigProvider,
   OpenClawEventEmitter,
-} from "../context";
+} from "./context.js";
 import type { OpenClawPluginApi } from "../../types/openclaw-plugin.js";
 
 // Mock OpenClaw API

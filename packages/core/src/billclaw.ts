@@ -15,7 +15,6 @@ import type { SyncResult } from "./sync/sync-service.js";
 
 // Storage
 import {
-  readAccountRegistry,
   readTransactions,
   readSyncStates,
   initializeStorage,
@@ -70,8 +69,8 @@ export class Billclaw {
    * Get all registered accounts
    */
   async getAccounts(): Promise<any[]> {
-    const storageConfig = await this.context.config.getStorageConfig();
-    return readAccountRegistry(storageConfig);
+    const config = await this.context.config.getConfig();
+    return config.accounts || [];
   }
 
   /**

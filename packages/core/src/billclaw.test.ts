@@ -203,22 +203,10 @@ describe("Billclaw", () => {
 
   describe("exportToBeancount", () => {
     it("should export transactions to Beancount format", async () => {
-      const transactions = [
-        {
-          id: "txn-1",
-          accountId: "acct-1",
-          date: "2024-01-15",
-          amount: 100.5,
-          currency: "USD",
-          source: "plaid" as const,
-          merchantName: "Test Merchant",
-        },
-      ];
-
       const exportResult = await billclaw.exportToBeancount(
-        transactions,
-        "Test Account",
-        "2024-01-15T00:00:00Z"
+        "acct-1",
+        2024,
+        1
       );
 
       expect(typeof exportResult).toBe("string");
@@ -228,22 +216,10 @@ describe("Billclaw", () => {
 
   describe("exportToLedger", () => {
     it("should export transactions to Ledger format", async () => {
-      const transactions = [
-        {
-          id: "txn-1",
-          accountId: "acct-1",
-          date: "2024-01-15",
-          amount: 100.5,
-          currency: "USD",
-          source: "plaid" as const,
-          merchantName: "Test Merchant",
-        },
-      ];
-
       const exportResult = await billclaw.exportToLedger(
-        transactions,
-        "Test Account",
-        "2024-01-15T00:00:00Z"
+        "acct-1",
+        2024,
+        1
       );
 
       expect(typeof exportResult).toBe("string");

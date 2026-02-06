@@ -22,8 +22,10 @@ export enum AuditEventType {
   // Credential operations
   CREDENTIAL_CREATED = "credential.created",
   CREDENTIAL_READ = "credential.read",
+  CREDENTIAL_WRITE = "credential.write",
   CREDENTIAL_UPDATED = "credential.updated",
   CREDENTIAL_DELETED = "credential.deleted",
+  CREDENTIAL_DELETE = "credential.delete", // Alias for backward compatibility
   CREDENTIAL_EXPORTED = "credential.exported",
 
   // Account operations
@@ -45,6 +47,13 @@ export enum AuditEventType {
   DATA_EXPORTED = "data.exported",
   DATA_IMPORTED = "data.imported",
   DATA_DELETED = "data.deleted",
+
+  // Legacy aliases for backward compatibility
+  ACCOUNT_ACCESS = "account.access",
+  SYNC_STARTED = "sync.started",
+  SYNC_COMPLETED = "sync.completed",
+  SYNC_FAILED = "sync.failed",
+  CONFIG_CHANGE = "config.change",
 }
 
 /**
@@ -52,6 +61,9 @@ export enum AuditEventType {
  */
 export enum AuditSeverity {
   INFO = "info",
+  LOW = "low",
+  MEDIUM = "medium",
+  HIGH = "high",
   WARNING = "warning",
   ERROR = "error",
   CRITICAL = "critical",
@@ -96,19 +108,31 @@ const DEFAULT_AUDIT_CONFIG: Required<AuditConfig> = {
 export class AuditLogger {
   private config: Required<AuditConfig>;
   private baseDir: string;
+  private logFilePath: string;
   private logger?: Logger;
 
-  constructor(config: AuditConfig = {}, logger?: Logger) {
-    this.config = { ...DEFAULT_AUDIT_CONFIG, ...config };
-    this.baseDir = this.config.dataDir.replace(/^~/, os.homedir());
-    this.logger = logger;
+  constructor(configOrPath: AuditConfig | string = {}, logger?: Logger) {
+    // Support both old API (string path) and new API (config object)
+    if (typeof configOrPath === 'string') {
+      // Old API: constructor(logFilePath: string, logger?: Logger)
+      this.logFilePath = configOrPath;
+      this.baseDir = path.dirname(configOrPath);
+      this.config = DEFAULT_AUDIT_CONFIG;
+      this.logger = logger;
+    } else {
+      // New API: constructor(config?: AuditConfig, logger?: Logger)
+      this.config = { ...DEFAULT_AUDIT_CONFIG, ...configOrPath };
+      this.baseDir = this.config.dataDir.replace(/^~/, os.homedir());
+      this.logFilePath = path.join(this.baseDir, "audit.log");
+      this.logger = logger;
+    }
   }
 
   /**
    * Get the audit log file path
    */
   private getAuditFilePath(): string {
-    return path.join(this.baseDir, "audit.log");
+    return this.logFilePath;
   }
 
   /**
@@ -254,10 +278,38 @@ export class AuditLogger {
 
     try {
       await fs.unlink(filePath);
-      this.logger?.info?.("Audit log cleared");
     } catch {
       // File doesn't exist, which is fine
     }
+
+    // Create empty file
+    await this.ensureAuditDir();
+    await fs.writeFile(filePath, "", "utf-8");
+    this.logger?.info?.("Audit log cleared");
+  }
+
+  /**
+   * Get audit log statistics
+   */
+  async getStats(): Promise<{
+    totalEvents: number;
+    byType: Record<string, number>;
+    bySeverity: Record<string, number>;
+  }> {
+    const events = await this.readEvents();
+    const byType: Record<string, number> = {};
+    const bySeverity: Record<string, number> = {};
+
+    for (const event of events) {
+      byType[event.type] = (byType[event.type] || 0) + 1;
+      bySeverity[event.severity] = (bySeverity[event.severity] || 0) + 1;
+    }
+
+    return {
+      totalEvents: events.length,
+      byType,
+      bySeverity,
+    };
   }
 }
 

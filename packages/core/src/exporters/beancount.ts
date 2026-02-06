@@ -89,16 +89,17 @@ export async function exportToBeancount(
   transactions: Transaction[],
   options: BeancountExportOptions
 ): Promise<string> {
-  if (transactions.length === 0) {
-    return "; No transactions found\n";
-  }
-
-  // Build Beancount file
+  // Build Beancount file header (always include this)
   let output = `;; Beancount export from BillClaw\n`;
   output += `;; Account: ${options.accountId}\n`;
   output += `;; Period: ${options.year}-${String(options.month).padStart(2, "0")}\n`;
   output += `;; Exported: ${new Date().toISOString()}\n`;
   output += "\n";
+
+  if (transactions.length === 0) {
+    output += "; No transactions found\n";
+    return output;
+  }
 
   // Add each transaction
   for (const txn of transactions) {

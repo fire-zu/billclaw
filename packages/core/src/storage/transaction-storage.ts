@@ -128,7 +128,8 @@ export async function readTransactions(
   config?: StorageConfig
 ): Promise<Transaction[]> {
   const baseDir = await getStorageDir(config);
-  const filePath = path.join(baseDir, "transactions", accountId, `${year}`, `${month}.json`);
+  const monthStr = month.toString().padStart(2, "0");
+  const filePath = path.join(baseDir, "transactions", accountId, `${year}`, `${monthStr}.json`);
 
   try {
     const content = await fs.readFile(filePath, "utf-8");
@@ -150,8 +151,9 @@ export async function writeTransactions(
   config?: StorageConfig
 ): Promise<void> {
   const baseDir = await getStorageDir(config);
+  const monthStr = month.toString().padStart(2, "0");
   const dirPath = path.join(baseDir, "transactions", accountId, `${year}`);
-  const filePath = path.join(dirPath, `${month}.json`);
+  const filePath = path.join(dirPath, `${monthStr}.json`);
 
   await fs.mkdir(dirPath, { recursive: true });
 

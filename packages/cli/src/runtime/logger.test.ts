@@ -8,7 +8,7 @@ import {
   LogLevel,
   createLogger,
   type CliLoggerConfig,
-} from "../logger";
+} from "./logger.js";
 
 describe("CliLogger", () => {
   describe("constructor", () => {
@@ -53,71 +53,62 @@ describe("CliLogger", () => {
 
   describe("log methods", () => {
     let logger: CliLogger;
-    let originalInfo: typeof console.log;
-    let originalError: typeof console.error;
-    let infoCalls: string[] = [];
-    let errorCalls: string[] = [];
+    let originalLog: typeof console.log;
+    let logCalls: string[] = [];
 
     beforeEach(() => {
       logger = createLogger({ level: LogLevel.DEBUG, colors: false });
 
-      // Mock console methods
-      originalInfo = console.log;
-      originalError = console.error;
+      // Mock console.log (all log levels use console.log in CliLogger)
+      originalLog = console.log;
 
       console.log = (...args: any[]) => {
-        infoCalls.push(args.join(" "));
-      };
-      console.error = (...args: any[]) => {
-        errorCalls.push(args.join(" "));
+        logCalls.push(args.join(" "));
       };
 
-      infoCalls = [];
-      errorCalls = [];
+      logCalls = [];
     });
 
     afterEach(() => {
-      console.log = originalInfo;
-      console.error = originalError;
+      console.log = originalLog;
     });
 
     it("should log debug messages", () => {
       logger.debug("test debug");
-      expect(infoCalls.length).toBeGreaterThan(0);
-      expect(infoCalls[0]).toContain("test debug");
+      expect(logCalls.length).toBeGreaterThan(0);
+      expect(logCalls.some((call) => call.includes("test debug"))).toBe(true);
     });
 
     it("should log info messages", () => {
       logger.info("test info");
-      expect(infoCalls.length).toBeGreaterThan(0);
-      expect(infoCalls[0]).toContain("test info");
+      expect(logCalls.length).toBeGreaterThan(0);
+      expect(logCalls.some((call) => call.includes("test info"))).toBe(true);
     });
 
     it("should log warn messages", () => {
       logger.warn("test warn");
-      // Warning might go to console.log or console.error
-      const allCalls = [...infoCalls, ...errorCalls];
-      expect(allCalls.some((call) => call.includes("test warn"))).toBe(true);
+      expect(logCalls.length).toBeGreaterThan(0);
+      expect(logCalls.some((call) => call.includes("test warn"))).toBe(true);
     });
 
     it("should log error messages", () => {
       logger.error("test error");
-      expect(errorCalls.length).toBeGreaterThan(0);
-      expect(errorCalls[0]).toContain("test error");
+      expect(logCalls.length).toBeGreaterThan(0);
+      expect(logCalls.some((call) => call.includes("test error"))).toBe(true);
     });
 
     it("should handle multiple arguments", () => {
       logger.info("arg1", "arg2", { obj: "value" });
-      expect(infoCalls.length).toBeGreaterThan(0);
-      expect(infoCalls[0]).toContain("arg1");
-      expect(infoCalls[0]).toContain("arg2");
+      expect(logCalls.length).toBeGreaterThan(0);
+      expect(logCalls.some((call) => call.includes("arg1"))).toBe(true);
+      expect(logCalls.some((call) => call.includes("arg2"))).toBe(true);
     });
 
     it("should serialize objects", () => {
       logger.info({ key: "value", num: 42 });
-      expect(infoCalls.length).toBeGreaterThan(0);
-      expect(infoCalls[0]).toContain("key");
-      expect(infoCalls[0]).toContain("value");
+      expect(logCalls.length).toBeGreaterThan(0);
+      expect(logCalls.some((call) => call.includes("key"))).toBe(true);
+      expect(logCalls.some((call) => call.includes("value"))).toBe(true);
     });
   });
 

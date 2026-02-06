@@ -15,7 +15,7 @@ import {
   error,
   warn,
   info,
-} from "../format";
+} from "./format.js";
 
 describe("createTable", () => {
   it("should create a table with headers", () => {
@@ -95,13 +95,13 @@ describe("formatCurrency", () => {
   it("should format USD currency", () => {
     const result = formatCurrency(1234.56);
     expect(result).toContain("$");
-    expect(result).toContain("1234.56");
+    expect(result).toContain("1,234.56");
   });
 
   it("should format EUR currency", () => {
     const result = formatCurrency(1234.56, "EUR");
     expect(result).toContain("€");
-    expect(result).toContain("1234.56");
+    expect(result).toContain("1,234.56");
   });
 
   it("should handle zero amount", () => {
@@ -145,7 +145,7 @@ describe("formatDateTime", () => {
     expect(result).toBeDefined();
     expect(typeof result).toBe("string");
     // Time format depends on locale, but should contain numbers
-    expect(result).toMatch(/\\d/);
+    expect(result).toMatch(/\d/);
   });
 });
 

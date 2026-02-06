@@ -86,8 +86,8 @@ export class MemoryCache {
       return null;
     }
 
-    // Check if expired
-    if (Date.now() > entry.expiresAt) {
+    // Check if expired (use >= to handle TTL of 0)
+    if (Date.now() >= entry.expiresAt) {
       this.cache.delete(key);
       this.config.logger?.debug?.(`Cache miss (expired): ${key}`);
       return null;
@@ -110,7 +110,7 @@ export class MemoryCache {
       return false;
     }
 
-    if (Date.now() > entry.expiresAt) {
+    if (Date.now() >= entry.expiresAt) {
       this.cache.delete(key);
       return false;
     }

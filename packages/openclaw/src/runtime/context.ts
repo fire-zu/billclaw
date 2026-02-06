@@ -16,7 +16,7 @@ import type { BillclawConfig } from "@fire-zu/billclaw-core";
 /**
  * OpenClaw logger adapter
  */
-class OpenClawLogger implements Logger {
+export class OpenClawLogger implements Logger {
   constructor(private api: OpenClawPluginApi) {}
 
   info(...args: unknown[]): void {
@@ -41,7 +41,7 @@ class OpenClawLogger implements Logger {
 /**
  * OpenClaw config provider
  */
-class OpenClawConfigProvider implements ConfigProvider {
+export class OpenClawConfigProvider implements ConfigProvider {
   private cachedConfig?: BillclawConfig;
 
   constructor(private api: OpenClawPluginApi) {}
@@ -80,7 +80,7 @@ class OpenClawConfigProvider implements ConfigProvider {
 /**
  * OpenClaw event emitter adapter
  */
-class OpenClawEventEmitter implements EventEmitter {
+export class OpenClawEventEmitter implements EventEmitter {
   private listeners = new Map<string, Set<(...args: any[]) => void>>();
 
   emit(event: string, data?: unknown): void {
@@ -115,13 +115,47 @@ class OpenClawEventEmitter implements EventEmitter {
  * OpenClaw runtime context
  */
 export class OpenClawRuntimeContext implements RuntimeContext {
-  readonly logger: Logger;
-  readonly config: ConfigProvider;
-  readonly events: EventEmitter;
+  private _logger: Logger;
+  private _config: ConfigProvider;
+  private _events: EventEmitter;
 
   constructor(api: OpenClawPluginApi) {
-    this.logger = new OpenClawLogger(api);
-    this.config = new OpenClawConfigProvider(api);
-    this.events = new OpenClawEventEmitter();
+    this._logger = new OpenClawLogger(api);
+    this._config = new OpenClawConfigProvider(api);
+    this._events = new OpenClawEventEmitter();
+
+    // Define readonly properties at runtime
+    Object.defineProperty(this, "logger", {
+      value: this._logger,
+      writable: false,
+      enumerable: true,
+      configurable: false,
+    });
+
+    Object.defineProperty(this, "config", {
+      value: this._config,
+      writable: false,
+      enumerable: true,
+      configurable: false,
+    });
+
+    Object.defineProperty(this, "events", {
+      value: this._events,
+      writable: false,
+      enumerable: true,
+      configurable: false,
+    });
+  }
+
+  get logger(): Logger {
+    return this._logger;
+  }
+
+  get config(): ConfigProvider {
+    return this._config;
+  }
+
+  get events(): EventEmitter {
+    return this._events;
   }
 }

@@ -31,12 +31,13 @@ export {
 } from './sources/plaid/plaid-sync.js';
 export {
   fetchGmailBills,
-  fetchBillEmails,
+  fetchGmailEmails,
   recognizeBill,
   parseBillToTransaction,
   type GmailConfig,
   type GmailAccount,
   type GmailFetchResult,
+  type GmailFetcherOptions,
   type EmailContent,
   type BillRecognition,
 } from './sources/gmail/gmail-fetch.js';
