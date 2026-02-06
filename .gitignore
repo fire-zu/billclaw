@@ -41,3 +41,7 @@ tmp
 
 # Documentation
 docs/
+
+# Claude Code
+.claude/
+CLAUDE.md
