@@ -1,5 +1,4 @@
 #!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
 
 # Check commit message format
 # Require conventional commits: feat:, fix:, docs:, etc.
@@ -10,6 +9,7 @@ if ! echo "$commit_msg" | grep -qE "$pattern"; then
   echo "Invalid commit message format."
   echo "Expected format: <type>(<scope>): <description>"
   echo "Types: feat, fix, docs, style, refactor, test, chore, build, ci, perf, revert, BREAKING"
-  echo "Example: feat(plaid): add support for webhook notifications"
+  echo "Scopes: core, cli, openclaw, plaid, gmail, storage, credentials, security, exports, docs, build, hooks"
+  echo "Example: feat(core): add transaction streaming support"
   exit 1
 fi
