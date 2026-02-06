@@ -197,7 +197,7 @@ function containsKeywords(text: string, keywords: string[]): boolean {
  */
 function extractAmount(
   text: string,
-): { amount: number currency: string } | null {
+): { amount: number; currency: string } | null {
   // Pattern 1: $123.45 or $1,234.56
   const usdPattern = /\$\s*([0-9,]+\.?\d*)/g
   const usdMatch = usdPattern.exec(text)
@@ -287,7 +287,7 @@ function classifyBillType(
   const content = `${subject} ${body}`.toLowerCase()
 
   // Score each bill type by number of matching keywords
-  const scores: Array<{ type: string score: number }> = []
+  const scores: Array<{ type: string; score: number }> = []
 
   for (const [billType, keywords] of Object.entries(patterns)) {
     const matchCount = keywords.filter((keyword) =>
@@ -435,7 +435,7 @@ export function recognizeBills(
 export function filterToBills(
   emails: EmailContent[],
   config: GmailConfig,
-): Array<{ email: EmailContent recognition: BillRecognition }> {
+): Array<{ email: EmailContent; recognition: BillRecognition }> {
   const results = emails.map((email) => ({
     email,
     recognition: recognizeBill(email, config),

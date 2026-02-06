@@ -142,7 +142,7 @@ export async function emitEvent(
     // Send webhook with retry logic (don't await)
     sendWebhook(
       logger,
-      webhook as { url: string secret?: string retryPolicy?: RetryPolicy },
+      webhook as { url: string; secret?: string; retryPolicy?: RetryPolicy },
       event,
     ).catch((error) => {
       logger.debug?.(`Webhook emission failed:`, error)
@@ -310,7 +310,7 @@ export async function emitWebhookTest(
  */
 async function sendWebhook(
   logger: Logger,
-  webhook: { url: string secret?: string retryPolicy?: RetryPolicy },
+  webhook: { url: string; secret?: string; retryPolicy?: RetryPolicy },
   event: BillclawEvent,
 ): Promise<void> {
   const maxRetries = webhook.retryPolicy?.maxRetries || 3
@@ -476,7 +476,9 @@ export function isSyncEvent(event: BillclawEvent): event is SyncEvent {
 /**
  * Type guard to check if an event is an account event
  */
-export function isAccountEvent(event: BillclawEvent): event is AccountEvent {
+export function isAccountEvent(
+  event: BillclawEvent,
+): event is AccountEvent {
   return (
     event.event === "account.connected" ||
     event.event === "account.disconnected" ||

@@ -51,7 +51,7 @@ interface GmailMessage {
   id: string
   threadId: string
   payload: {
-    headers?: Array<{ name: string value: string }>
+    headers?: Array<{ name: string; value: string }>
     body?: { data: string }
     parts?: Array<{
       mimeType?: string
@@ -105,9 +105,9 @@ export async function fetchGmailEmails(
     }
 
     const data = (await response.json()) as {
-      messages?: Array<{ id: string threadId: string }>
+      messages?: Array<{ id: string; threadId: string }>
     }
-    const messages: Array<{ id: string threadId: string }> = data.messages || []
+    const messages: Array<{ id: string; threadId: string }> = data.messages || []
 
     logger.info?.(`Found ${messages.length} messages matching query`)
 

@@ -103,7 +103,7 @@ async function handlePlaidWebhook(request: {
   body: unknown
   headers: Record<string, string>
   query: Record<string, string>
-}): Promise<{ status: number body: { received: boolean error?: string } }> {
+}): Promise<{ status: number; body: { received: boolean; error?: string } }> {
   try {
     const body = request.body as any
     const webhookType = body.webhook_type
@@ -190,7 +190,7 @@ async function handleGoCardlessWebhook(_request: {
   body: unknown
   headers: Record<string, string>
   query: Record<string, string>
-}): Promise<{ status: number body: { received: boolean } }> {
+}): Promise<{ status: number; body: { received: boolean } }> {
   try {
     api?.logger.info?.("Received GoCardless webhook")
 
@@ -215,7 +215,7 @@ async function handleTestWebhook(_request: {
   body: unknown
   headers: Record<string, string>
   query: Record<string, string>
-}): Promise<{ status: number body: { sent: boolean error?: string } }> {
+}): Promise<{ status: number; body: { sent: boolean; error?: string } }> {
   try {
     api?.logger.info?.("Received test webhook request")
 

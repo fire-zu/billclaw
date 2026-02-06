@@ -178,7 +178,7 @@ export async function appendTransactions(
   month: number,
   newTransactions: Transaction[],
   config?: StorageConfig,
-): Promise<{ added: number updated: number }> {
+): Promise<{ added: number; updated: number }> {
   const existing = await readTransactions(accountId, year, month, config)
   const existingIds = new Set(existing.map((t) => t.transactionId))
 

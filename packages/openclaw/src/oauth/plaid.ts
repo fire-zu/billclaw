@@ -76,7 +76,7 @@ async function createLinkToken(
 async function exchangePublicToken(
   api: OpenClawPluginApi,
   publicToken: string,
-): Promise<{ accessToken: string itemId: string }> {
+): Promise<{ accessToken: string; itemId: string }> {
   const plaidConfig = getPlaidConfig(api)
   const plaidClient = createPlaidClient(plaidConfig)
 

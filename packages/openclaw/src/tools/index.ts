@@ -88,7 +88,7 @@ export const gmailFetchTool = {
 
   async execute(
     api: OpenClawPluginApi,
-    params: { accountId?: string days?: number },
+    params: { accountId?: string; days?: number },
   ) {
     const billclaw = createBillclaw(api)
     const results = await billclaw.syncGmail(
@@ -143,7 +143,7 @@ export const billParseTool = {
 
   async execute(
     _api: OpenClawPluginApi,
-    params: { source: string data: string },
+    params: { source: string; data: string },
   ) {
     // This is a stub - the actual implementation would depend on the source type
     return {
@@ -188,7 +188,7 @@ export const conversationalSyncTool = {
 
   async execute(
     api: OpenClawPluginApi,
-    params: { prompt?: string accountId?: string },
+    params: { prompt?: string; accountId?: string },
   ) {
     const billclaw = createBillclaw(api)
 

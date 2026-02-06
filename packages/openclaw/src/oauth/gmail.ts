@@ -100,7 +100,7 @@ function cleanupExpiredStates(): void {
 async function generateAuthorizationUrl(
   api: OpenClawPluginApi,
   redirectUri: string = "http://localhost:3000/callback",
-): Promise<{ url: string state: string }> {
+): Promise<{ url: string; state: string }> {
   cleanupExpiredStates()
 
   const gmailConfig = getGmailConfig(api)
@@ -150,7 +150,7 @@ async function exchangeCodeForToken(
   code: string,
   state: string,
   redirectUri: string = "http://localhost:3000/callback",
-): Promise<{ accessToken: string refreshToken?: string expiresIn?: number }> {
+): Promise<{ accessToken: string; refreshToken?: string; expiresIn?: number }> {
   // Retrieve stored state
   const storedState = oauthStateStore.get(state)
   if (!storedState) {

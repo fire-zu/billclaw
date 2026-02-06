@@ -29,7 +29,8 @@
     "test": "vitest",
     "test:coverage": "vitest --coverage",
     "lint": "oxlint",
-    "format": "oxfmt",
+    "format": "oxfmt src/",
+    "format:write": "oxfmt -w src/",
     "clean": "rm -rf dist"
   },
   "keywords": [
