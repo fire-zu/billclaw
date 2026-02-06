@@ -31,7 +31,7 @@ function getPlaidConfig(api: OpenClawPluginApi): PlaidConfig {
 
   if (!clientId || !secret) {
     throw new Error(
-      "Plaid credentials not configured. Set PLAID_CLIENT_ID and PLAID_SECRET environment variables, or configure them in billclaw settings."
+      "Plaid credentials not configured. Set PLAID_CLIENT_ID and PLAID_SECRET environment variables, or configure them in billclaw settings.",
     );
   }
 
@@ -47,7 +47,7 @@ function getPlaidConfig(api: OpenClawPluginApi): PlaidConfig {
  */
 async function createLinkToken(
   api: OpenClawPluginApi,
-  accountId?: string
+  accountId?: string,
 ): Promise<{ linkToken: string }> {
   const plaidConfig = getPlaidConfig(api);
   const plaidClient = createPlaidClient(plaidConfig);
@@ -75,7 +75,7 @@ async function createLinkToken(
  */
 async function exchangePublicToken(
   api: OpenClawPluginApi,
-  publicToken: string
+  publicToken: string,
 ): Promise<{ accessToken: string; itemId: string }> {
   const plaidConfig = getPlaidConfig(api);
   const plaidClient = createPlaidClient(plaidConfig);
@@ -112,7 +112,7 @@ async function exchangePublicToken(
  */
 export async function plaidOAuthHandler(
   api: OpenClawPluginApi,
-  publicToken?: string
+  publicToken?: string,
 ): Promise<{ url: string; token?: string; itemId?: string; accessToken?: string }> {
   try {
     if (!publicToken) {

@@ -103,7 +103,7 @@ export async function emitEvent(
   logger: Logger,
   webhooks: WebhookConfig[],
   eventType: WebhookEventType,
-  data: unknown
+  data: unknown,
 ): Promise<void> {
   const enabledWebhooks = webhooks.filter((w) => w.enabled && w.url);
 
@@ -136,7 +136,11 @@ export async function emitEvent(
     }
 
     // Send webhook with retry logic (don't await)
-    sendWebhook(logger, webhook as { url: string; secret?: string; retryPolicy?: RetryPolicy }, event).catch((error) => {
+    sendWebhook(
+      logger,
+      webhook as { url: string; secret?: string; retryPolicy?: RetryPolicy },
+      event,
+    ).catch((error) => {
       logger.debug?.(`Webhook emission failed:`, error);
     });
   });
@@ -153,7 +157,7 @@ export async function emitEvent(
 export async function emitTransactionNew(
   logger: Logger,
   webhooks: WebhookConfig[],
-  transaction: TransactionEventData
+  transaction: TransactionEventData,
 ): Promise<void> {
   await emitEvent(logger, webhooks, "transaction.new", transaction);
 }
@@ -164,7 +168,7 @@ export async function emitTransactionNew(
 export async function emitTransactionUpdated(
   logger: Logger,
   webhooks: WebhookConfig[],
-  transaction: TransactionEventData
+  transaction: TransactionEventData,
 ): Promise<void> {
   await emitEvent(logger, webhooks, "transaction.updated", transaction);
 }
@@ -176,7 +180,7 @@ export async function emitTransactionDeleted(
   logger: Logger,
   webhooks: WebhookConfig[],
   transactionId: string,
-  accountId: string
+  accountId: string,
 ): Promise<void> {
   await emitEvent(logger, webhooks, "transaction.deleted", {
     transactionId,
@@ -191,7 +195,7 @@ export async function emitSyncStarted(
   logger: Logger,
   webhooks: WebhookConfig[],
   accountId: string,
-  syncId: string
+  syncId: string,
 ): Promise<void> {
   await emitEvent(logger, webhooks, "sync.started", {
     accountId,
@@ -206,7 +210,7 @@ export async function emitSyncStarted(
 export async function emitSyncCompleted(
   logger: Logger,
   webhooks: WebhookConfig[],
-  syncData: SyncEventData
+  syncData: SyncEventData,
 ): Promise<void> {
   await emitEvent(logger, webhooks, "sync.completed", syncData);
 }
@@ -219,7 +223,7 @@ export async function emitSyncFailed(
   webhooks: WebhookConfig[],
   accountId: string,
   syncId: string,
-  error: string
+  error: string,
 ): Promise<void> {
   await emitEvent(logger, webhooks, "sync.failed", {
     accountId,
@@ -236,7 +240,7 @@ export async function emitAccountConnected(
   logger: Logger,
   webhooks: WebhookConfig[],
   accountId: string,
-  accountType: "plaid" | "gmail" | "gocardless"
+  accountType: "plaid" | "gmail" | "gocardless",
 ): Promise<void> {
   await emitEvent(logger, webhooks, "account.connected", {
     accountId,
@@ -252,7 +256,7 @@ export async function emitAccountDisconnected(
   logger: Logger,
   webhooks: WebhookConfig[],
   accountId: string,
-  accountType: "plaid" | "gmail" | "gocardless"
+  accountType: "plaid" | "gmail" | "gocardless",
 ): Promise<void> {
   await emitEvent(logger, webhooks, "account.disconnected", {
     accountId,
@@ -269,7 +273,7 @@ export async function emitAccountError(
   webhooks: WebhookConfig[],
   accountId: string,
   accountType: "plaid" | "gmail" | "gocardless",
-  error: string
+  error: string,
 ): Promise<void> {
   await emitEvent(logger, webhooks, "account.error", {
     accountId,
@@ -285,7 +289,7 @@ export async function emitAccountError(
 export async function emitWebhookTest(
   logger: Logger,
   webhooks: WebhookConfig[],
-  message: string = "Test webhook from BillClaw"
+  message: string = "Test webhook from BillClaw",
 ): Promise<void> {
   await emitEvent(logger, webhooks, "webhook.test", {
     message,
@@ -303,7 +307,7 @@ export async function emitWebhookTest(
 async function sendWebhook(
   logger: Logger,
   webhook: { url: string; secret?: string; retryPolicy?: RetryPolicy },
-  event: BillclawEvent
+  event: BillclawEvent,
 ): Promise<void> {
   const maxRetries = webhook.retryPolicy?.maxRetries || 3;
   const initialDelay = webhook.retryPolicy?.initialDelay || 1000;
@@ -350,10 +354,7 @@ async function sendWebhook(
     } catch (error) {
       attempt++;
       if (attempt >= maxRetries) {
-        logger.error?.(
-          `Webhook failed after ${maxRetries} retries to ${webhook.url}:`,
-          error
-        );
+        logger.error?.(`Webhook failed after ${maxRetries} retries to ${webhook.url}:`, error);
         return;
       }
 
@@ -372,10 +373,7 @@ async function sendWebhook(
  * @param secret - Secret key for HMAC
  * @returns Signature in format "sha256=<hex>"
  */
-export function generateSignature(
-  event: BillclawEvent,
-  secret: string
-): string {
+export function generateSignature(event: BillclawEvent, secret: string): string {
   // Create payload to sign (all fields except signature)
   const payload = {
     id: event.id,
@@ -404,24 +402,14 @@ export function generateSignature(
  * @param secret - Secret key for HMAC
  * @returns True if signature is valid
  */
-export function verifySignature(
-  payload: string,
-  signature: string,
-  secret: string
-): boolean {
+export function verifySignature(payload: string, signature: string, secret: string): boolean {
   try {
-    const expectedSignature = crypto
-      .createHmac("sha256", secret)
-      .update(payload)
-      .digest("hex");
+    const expectedSignature = crypto.createHmac("sha256", secret).update(payload).digest("hex");
 
     const providedSignature = signature.replace("sha256=", "");
 
     // Use timing-safe comparison to prevent timing attacks
-    return crypto.timingSafeEqual(
-      Buffer.from(expectedSignature),
-      Buffer.from(providedSignature)
-    );
+    return crypto.timingSafeEqual(Buffer.from(expectedSignature), Buffer.from(providedSignature));
   } catch {
     return false;
   }
@@ -443,7 +431,7 @@ function generateEventId(): string {
  * Type guard to check if an event is a transaction event
  */
 export function isTransactionEvent(
-  event: BillclawEvent
+  event: BillclawEvent,
 ): event is BillclawEvent & { data: TransactionEventData } {
   return (
     event.event === "transaction.new" ||
@@ -456,7 +444,7 @@ export function isTransactionEvent(
  * Type guard to check if an event is a sync event
  */
 export function isSyncEvent(
-  event: BillclawEvent
+  event: BillclawEvent,
 ): event is BillclawEvent & { data: SyncEventData } {
   return (
     event.event === "sync.started" ||
@@ -469,7 +457,7 @@ export function isSyncEvent(
  * Type guard to check if an event is an account event
  */
 export function isAccountEvent(
-  event: BillclawEvent
+  event: BillclawEvent,
 ): event is BillclawEvent & { data: AccountEventData } {
   return (
     event.event === "account.connected" ||

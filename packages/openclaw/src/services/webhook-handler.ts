@@ -26,7 +26,12 @@ let plaidWebhookSecret: string | undefined;
 /**
  * Convert OpenClaw logger to BillClaw Logger interface
  */
-function toLogger(logger: OpenClawPluginApi["logger"] | undefined): { info: (...args: unknown[]) => void; error: (...args: unknown[]) => void; warn: (...args: unknown[]) => void; debug: (...args: unknown[]) => void } {
+function toLogger(logger: OpenClawPluginApi["logger"] | undefined): {
+  info: (...args: unknown[]) => void;
+  error: (...args: unknown[]) => void;
+  warn: (...args: unknown[]) => void;
+  debug: (...args: unknown[]) => void;
+} {
   // Ensure all methods are defined and callable
   const log = logger?.info || (() => {});
   const logError = logger?.error || (() => {});
@@ -49,9 +54,7 @@ function toLogger(logger: OpenClawPluginApi["logger"] | undefined): { info: (...
  * - /webhook/gocardless - GoCardless webhook handler
  * - /webhook/test - Test webhook endpoint
  */
-export function registerWebhookHandlers(
-  dependencies: WebhookHandlerDependencies
-): void {
+export function registerWebhookHandlers(dependencies: WebhookHandlerDependencies): void {
   api = dependencies.api;
   plaidWebhookSecret = dependencies.plaidWebhookSecret;
 
@@ -122,7 +125,7 @@ async function handlePlaidWebhook(request: {
           // Find the account associated with this item
           const pluginConfig = api?.pluginConfig as any;
           const account = pluginConfig?.accounts?.find(
-            (acc: any) => acc.type === "plaid" && acc.plaidItemId === itemId && acc.enabled
+            (acc: any) => acc.type === "plaid" && acc.plaidItemId === itemId && acc.enabled,
           );
 
           if (account && api) {
@@ -137,13 +140,16 @@ async function handlePlaidWebhook(request: {
 
       case "ITEM":
         if (webhookCode === "ERROR" || webhookCode === "LOGIN_REQUIRED") {
-          const error = body.error ?? { error_code: webhookCode, error_message: "Item login required" };
+          const error = body.error ?? {
+            error_code: webhookCode,
+            error_message: "Item login required",
+          };
           // Emit account error event
           await emitEvent(
             toLogger(api!.logger),
             configWebhooks,
             "account.error" as WebhookEventType,
-            { accountId: itemId, accountType: "plaid", error: JSON.stringify(error) }
+            { accountId: itemId, accountType: "plaid", error: JSON.stringify(error) },
           ).catch((err) => api?.logger.debug?.(`Event emission failed:`, err));
         }
         break;
@@ -195,12 +201,10 @@ async function handleTestWebhook(_request: {
     api?.logger.info?.("Received test webhook request");
 
     // Emit test event to all configured webhooks
-    await emitEvent(
-      toLogger(api!.logger),
-      configWebhooks,
-      "webhook.test" as WebhookEventType,
-      { message: "Test webhook from BillClaw", triggeredBy: "user" }
-    );
+    await emitEvent(toLogger(api!.logger), configWebhooks, "webhook.test" as WebhookEventType, {
+      message: "Test webhook from BillClaw",
+      triggeredBy: "user",
+    });
 
     return { status: 200, body: { sent: true } };
   } catch (error) {
