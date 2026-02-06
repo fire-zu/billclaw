@@ -7,6 +7,13 @@
 import type { CliCommand, CliContext } from "./registry.js";
 import inquirer from "inquirer";
 import { success, error } from "../utils/format.js";
+import {
+  readAccountRegistry,
+  writeAccountRegistry,
+  getStorageDir,
+} from "@fire-zu/billclaw-core";
+import * as fs from "node:fs/promises";
+import * as path from "node:path";
 
 /**
  * Account type prompt answers
@@ -29,15 +36,23 @@ interface PlaidAnswers {
  */
 interface GmailAnswers {
   credentialsPath: string;
+  clientId?: string;
+  clientSecret?: string;
+}
+
+/**
+ * GoCardless setup answers
+ */
+interface GoCardlessAnswers {
+  clientId: string;
+  secret: string;
+  environment: "sandbox" | "live";
 }
 
 /**
  * Run setup wizard
  */
 async function runSetup(context: CliContext): Promise<void> {
-  const { runtime } = context;
-  const config = await runtime.config.getConfig();
-
   console.log("BillClaw Account Setup");
   console.log("");
 
@@ -106,10 +121,42 @@ async function setupPlaid(context: CliContext): Promise<void> {
   ]);
 
   const accountId = `plaid-${Date.now()}`;
-  
-  // TODO: Store credentials securely using keychain
-  // TODO: Add account to config
-  
+
+  // Get storage configuration
+  const storageConfig = await context.runtime.config.getStorageConfig();
+
+  // Read current account registry
+  const accounts = await readAccountRegistry(storageConfig);
+
+  // Add new account to registry
+  accounts.push({
+    id: accountId,
+    type: "plaid",
+    name: `Plaid Account ${accounts.length + 1}`,
+    createdAt: new Date().toISOString(),
+  });
+  await writeAccountRegistry(accounts, storageConfig);
+
+  // Store credentials to file
+  const accountPath = path.join(
+    await getStorageDir(storageConfig),
+    `accounts/${accountId}.json`
+  );
+  await fs.mkdir(path.dirname(accountPath), { recursive: true });
+  await fs.writeFile(
+    accountPath,
+    JSON.stringify(
+      {
+        plaidAccessToken: null, // Will be populated by OAuth flow
+        clientId: answers.clientId,
+        secret: answers.secret,
+        environment: answers.environment,
+      },
+      null,
+      2
+    )
+  );
+
   context.runtime.logger.info("Plaid account configured:", accountId);
 }
 
@@ -124,13 +171,56 @@ async function setupGmail(context: CliContext): Promise<void> {
       message: "Path to Gmail credentials JSON:",
       default: "~/.gmail-credentials.json",
     },
+    {
+      type: "input",
+      name: "clientId",
+      message: "Gmail OAuth Client ID (optional):",
+    },
+    {
+      type: "password",
+      name: "clientSecret",
+      message: "Gmail OAuth Client Secret (optional):",
+      mask: "*",
+    },
   ]);
 
   const accountId = `gmail-${Date.now()}`;
-  
-  // TODO: Store credentials securely
-  // TODO: Add account to config
-  
+
+  // Get storage configuration
+  const storageConfig = await context.runtime.config.getStorageConfig();
+
+  // Read current account registry
+  const accounts = await readAccountRegistry(storageConfig);
+
+  // Add new account to registry
+  accounts.push({
+    id: accountId,
+    type: "gmail",
+    name: `Gmail Account ${accounts.length + 1}`,
+    createdAt: new Date().toISOString(),
+  });
+  await writeAccountRegistry(accounts, storageConfig);
+
+  // Store credentials to file
+  const accountPath = path.join(
+    await getStorageDir(storageConfig),
+    `accounts/${accountId}.json`
+  );
+  await fs.mkdir(path.dirname(accountPath), { recursive: true });
+  await fs.writeFile(
+    accountPath,
+    JSON.stringify(
+      {
+        gmailRefreshToken: null, // Will be populated by OAuth flow
+        credentialsPath: answers.credentialsPath,
+        clientId: answers.clientId || null,
+        clientSecret: answers.clientSecret || null,
+      },
+      null,
+      2
+    )
+  );
+
   context.runtime.logger.info("Gmail account configured:", accountId);
 }
 
@@ -138,7 +228,7 @@ async function setupGmail(context: CliContext): Promise<void> {
  * Setup GoCardless account
  */
 async function setupGoCardless(context: CliContext): Promise<void> {
-  const answers = await inquirer.prompt([
+  const answers = await inquirer.prompt<GoCardlessAnswers>([
     {
       type: "input",
       name: "clientId",
@@ -165,10 +255,42 @@ async function setupGoCardless(context: CliContext): Promise<void> {
   ]);
 
   const accountId = `gocardless-${Date.now()}`;
-  
-  // TODO: Store credentials securely
-  // TODO: Add account to config
-  
+
+  // Get storage configuration
+  const storageConfig = await context.runtime.config.getStorageConfig();
+
+  // Read current account registry
+  const accounts = await readAccountRegistry(storageConfig);
+
+  // Add new account to registry
+  accounts.push({
+    id: accountId,
+    type: "gocardless",
+    name: `GoCardless Account ${accounts.length + 1}`,
+    createdAt: new Date().toISOString(),
+  });
+  await writeAccountRegistry(accounts, storageConfig);
+
+  // Store credentials to file
+  const accountPath = path.join(
+    await getStorageDir(storageConfig),
+    `accounts/${accountId}.json`
+  );
+  await fs.mkdir(path.dirname(accountPath), { recursive: true });
+  await fs.writeFile(
+    accountPath,
+    JSON.stringify(
+      {
+        gocardlessAccessToken: null, // Will be populated by OAuth flow
+        clientId: answers.clientId,
+        secret: answers.secret,
+        environment: answers.environment,
+      },
+      null,
+      2
+    )
+  );
+
   context.runtime.logger.info("GoCardless account configured:", accountId);
 }
 
