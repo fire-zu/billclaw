@@ -1,2 +1,0 @@
-Test workflow trigger
-Test workflow trigger after permissions fix
