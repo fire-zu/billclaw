@@ -248,7 +248,7 @@ billclaw export --format beancount --show-mappings
 ## Resources
 
 - **Documentation**: https://github.com/fire-la/billclaw
-- **npm packages**: https://www.npmjs.com/org/fire-zu
+- **npm packages**: https://www.npmjs.com/org/firela
 - **Issues**: https://github.com/fire-la/billclaw/issues
 
 ## Contributing
