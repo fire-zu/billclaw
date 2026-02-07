@@ -1,4 +1,4 @@
-# @fire-zu/billclaw-openclaw
+# @fire-la/billclaw-openclaw
 
 OpenClaw plugin adapter for BillClaw financial data import.
 
@@ -17,7 +17,7 @@ This package provides an OpenClaw plugin that integrates BillClaw's financial da
 
 ```bash
 cd ~/.openclaw/extensions
-npm install @fire-zu/billclaw-openclaw
+npm install @fire-la/billclaw-openclaw
 ```
 
 ### Manual Registration
@@ -26,7 +26,7 @@ Add to your OpenClaw configuration:
 
 ```json
 {
-  "extensions": ["@fire-zu/billclaw-openclaw"]
+  "extensions": ["@fire-la/billclaw-openclaw"]
 }
 ```
 
@@ -246,7 +246,7 @@ Plugin configuration is managed through OpenClaw's plugin config system:
 │  ├── OAuth Providers (2)                │
 │  └── Background Services (2)            │
 ├─────────────────────────────────────────┤
-│  @fire-zu/billclaw-core                 │
+│  @fire-la/billclaw-core                 │
 │  (Framework-agnostic core logic)        │
 └─────────────────────────────────────────┘
 ```
@@ -270,6 +270,6 @@ MIT
 
 ## See Also
 
-- [@fire-zu/billclaw-core](https://github.com/fire-zu/billclaw/tree/main/packages/core)
-- [@fire-zu/billclaw-cli](https://github.com/fire-zu/billclaw/tree/main/packages/cli)
+- [@fire-la/billclaw-core](https://github.com/fire-la/billclaw/tree/main/packages/core)
+- [@fire-la/billclaw-cli](https://github.com/fire-la/billclaw/tree/main/packages/cli)
 - [OpenClaw Documentation](https://openclaw.dev)

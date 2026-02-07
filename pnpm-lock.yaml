@@ -20,7 +20,7 @@ importers:
 
   packages/cli:
     dependencies:
-      '@fire-zu/billclaw-core':
+      '@fire-la/billclaw-core':
         specifier: workspace:*
         version: link:../core
       chalk:
@@ -98,7 +98,7 @@ importers:
 
   packages/openclaw:
     dependencies:
-      '@fire-zu/billclaw-core':
+      '@fire-la/billclaw-core':
         specifier: workspace:*
         version: link:../core
       plaid:

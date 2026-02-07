@@ -8,7 +8,7 @@
  */
 
 import type { OpenClawPluginApi } from "../types/openclaw-plugin.js"
-import { createPlaidClient, type PlaidConfig } from "@fire-zu/billclaw-core"
+import { createPlaidClient, type PlaidConfig } from "@fire-la/billclaw-core"
 import type {
   LinkTokenCreateRequest,
   LinkTokenCreateResponse,

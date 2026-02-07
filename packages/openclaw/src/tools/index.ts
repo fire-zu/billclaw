@@ -6,7 +6,7 @@
  */
 
 import type { OpenClawPluginApi } from "../types/openclaw-plugin.js"
-import { Billclaw } from "@fire-zu/billclaw-core"
+import { Billclaw } from "@fire-la/billclaw-core"
 import { OpenClawRuntimeContext } from "../runtime/context.js"
 
 /**
@@ -323,5 +323,5 @@ function getHelpText(topic?: string): string {
 
 Available topics: ${Object.keys(helps).join(", ")}
 
-For more information, visit: https://github.com/fire-zu/billclaw`
+For more information, visit: https://github.com/fire-la/billclaw`
 }

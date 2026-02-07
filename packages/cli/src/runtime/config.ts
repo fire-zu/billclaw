@@ -7,7 +7,7 @@
 import * as fs from "node:fs"
 import * as path from "node:path"
 import * as os from "node:os"
-import type { ConfigProvider, BillclawConfig } from "@fire-zu/billclaw-core"
+import type { ConfigProvider, BillclawConfig } from "@fire-la/billclaw-core"
 
 /**
  * CLI config provider options

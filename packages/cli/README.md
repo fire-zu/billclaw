@@ -1,4 +1,4 @@
-# @fire-zu/billclaw-cli
+# @fire-la/billclaw-cli
 
 Standalone command-line interface for BillClaw financial data management.
 
@@ -18,13 +18,13 @@ The CLI package provides a command-line tool for managing financial data without
 ### Global Installation
 
 ```bash
-npm install -g @fire-zu/billclaw-cli
+npm install -g @fire-la/billclaw-cli
 ```
 
 ### Local Installation
 
 ```bash
-npm install @fire-zu/billclaw-cli
+npm install @fire-la/billclaw-cli
 npx billclaw
 ```
 

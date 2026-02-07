@@ -10,8 +10,8 @@ import type {
   ConfigProvider,
   Logger,
   EventEmitter,
-} from "@fire-zu/billclaw-core"
-import type { BillclawConfig } from "@fire-zu/billclaw-core"
+} from "@fire-la/billclaw-core"
+import type { BillclawConfig } from "@fire-la/billclaw-core"
 
 /**
  * OpenClaw logger adapter

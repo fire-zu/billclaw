@@ -1,6 +1,6 @@
 {
   "$schema": "https://openclaw.dev/plugin.schema.json",
-  "name": "@fire-zu/billclaw-openclaw",
+  "name": "@fire-la/billclaw-openclaw",
   "version": "0.0.1",
   "description": "Financial data sovereignty plugin - Plaid, Gmail, GoCardless integration",
   "author": "fire-zu",

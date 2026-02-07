@@ -4,7 +4,7 @@
  * Combines logger, config provider, and event emitter for CLI usage.
  */
 
-import type { RuntimeContext } from "@fire-zu/billclaw-core"
+import type { RuntimeContext } from "@fire-la/billclaw-core"
 import { CliLogger, LogLevel, createLogger } from "./logger.js"
 import { CliConfigProvider, createConfigProvider } from "./config.js"
 import { CliEventEmitter } from "./events.js"

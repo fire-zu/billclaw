@@ -515,7 +515,7 @@ export function logError(
  */
 export function getTroubleshootingUrl(category: ErrorCategory): string {
   const baseUrl =
-    "https://github.com/fire-zu/billclaw/blob/main/docs/troubleshooting.md"
+    "https://github.com/fire-la/billclaw/blob/main/docs/troubleshooting.md"
   const urls: Partial<Record<ErrorCategory, string>> = {
     [ErrorCategory.CONFIG]: `${baseUrl}#configuration-issues`,
     [ErrorCategory.CREDENTIALS]: `${baseUrl}#credentials--authentication`,

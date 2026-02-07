@@ -1,4 +1,4 @@
-# @fire-zu/billclaw-core
+# @fire-la/billclaw-core
 
 Framework-agnostic core business logic for BillClaw financial data import.
 
@@ -17,13 +17,13 @@ This package contains all core functionality with zero dependencies on any AI fr
 ## Installation
 
 ```bash
-pnpm add @fire-zu/billclaw-core
+pnpm add @fire-la/billclaw-core
 ```
 
 ## Quick Start
 
 ```typescript
-import { Billclaw } from "@fire-zu/billclaw-core";
+import { Billclaw } from "@fire-la/billclaw-core";
 import { createRuntimeContext } from "./runtime.js";
 
 // Create a runtime context (framework-specific adapter)

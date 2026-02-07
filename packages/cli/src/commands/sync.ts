@@ -7,7 +7,7 @@
 import type { CliCommand, CliContext } from "./registry.js"
 import { Spinner } from "../utils/progress.js"
 import { success, error, formatStatus } from "../utils/format.js"
-import { Billclaw } from "@fire-zu/billclaw-core"
+import { Billclaw } from "@fire-la/billclaw-core"
 
 /**
  * Run sync command

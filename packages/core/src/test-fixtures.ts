@@ -2,7 +2,7 @@
  * Test fixtures for BillClaw
  */
 
-import type { AccountConfig, BillclawConfig } from "@fire-zu/billclaw-core"
+import type { AccountConfig, BillclawConfig } from "@fire-la/billclaw-core"
 
 /**
  * Sample Plaid transaction data (external format)

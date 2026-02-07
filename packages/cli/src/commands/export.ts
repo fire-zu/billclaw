@@ -13,7 +13,7 @@ import {
   exportToLedger,
   type BeancountExportOptions,
   type LedgerExportOptions,
-} from "@fire-zu/billclaw-core"
+} from "@fire-la/billclaw-core"
 import * as fs from "node:fs/promises"
 import * as path from "node:path"
 

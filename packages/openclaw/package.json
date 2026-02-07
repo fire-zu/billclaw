@@ -1,5 +1,5 @@
 {
-  "name": "@fire-zu/billclaw-openclaw",
+  "name": "@fire-la/billclaw-openclaw",
   "version": "0.1.3",
   "description": "BillClaw OpenClaw Plugin - Adapter for OpenClaw AI framework",
   "type": "module",
@@ -40,11 +40,11 @@
     "transactions",
     "bills"
   ],
-  "author": "fire-zu",
+  "author": "fire-la",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/fire-zu/billclaw.git",
+    "url": "https://github.com/fire-la/billclaw.git",
     "directory": "packages/openclaw"
   },
   "devDependencies": {
@@ -58,7 +58,7 @@
     "vitest": "^3.0.0"
   },
   "dependencies": {
-    "@fire-zu/billclaw-core": "workspace:*",
+    "@fire-la/billclaw-core": "workspace:*",
     "plaid": "^32.0.0",
     "zod": "^3.25.0"
   },

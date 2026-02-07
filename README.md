@@ -32,7 +32,7 @@ BillClaw uses a **Plugin + Skill hybrid architecture**:
 │           └──────────┬───────────┘                          │
 │                      ▼                                      │
 │           ┌────────────────────┐                           │
-│           │  @fire-zu/billclaw-core  │                     │
+│           │  @fire-la/billclaw-core  │                     │
 │           │  (Framework-Agnostic) │                         │
 │           └────────────────────┘                           │
 │                      │                                      │
@@ -48,7 +48,7 @@ BillClaw uses a **Plugin + Skill hybrid architecture**:
 
 ## Packages
 
-### [@fire-zu/billclaw-core](./packages/core)
+### [@fire-la/billclaw-core](./packages/core)
 
 Framework-agnostic core business logic. This package contains all the functionality with zero dependencies on any AI framework.
 
@@ -58,7 +58,7 @@ Framework-agnostic core business logic. This package contains all the functional
 - Beancount and Ledger exporters
 - Security: keychain integration and audit logging
 
-### [@fire-zu/billclaw-openclaw](./packages/openclaw)
+### [@fire-la/billclaw-openclaw](./packages/openclaw)
 
 OpenClaw plugin adapter. Integrates BillClaw with the OpenClaw AI framework.
 
@@ -67,7 +67,7 @@ OpenClaw plugin adapter. Integrates BillClaw with the OpenClaw AI framework.
 - 2 OAuth providers (Plaid, Gmail)
 - 2 background services (sync, webhook)
 
-### [@fire-zu/billclaw-cli](./packages/cli)
+### [@fire-la/billclaw-cli](./packages/cli)
 
 Standalone command-line interface. Use BillClaw without any AI framework.
 
@@ -83,13 +83,13 @@ Standalone command-line interface. Use BillClaw without any AI framework.
 
 ```bash
 cd ~/.openclaw/extensions
-npm install @fire-zu/billclaw-openclaw
+npm install @fire-la/billclaw-openclaw
 ```
 
 ### As Standalone CLI
 
 ```bash
-npm install -g @fire-zu/billclaw-cli
+npm install -g @fire-la/billclaw-cli
 billclaw setup
 billclaw sync
 ```
@@ -97,11 +97,11 @@ billclaw sync
 ### As a Library
 
 ```bash
-npm install @fire-zu/billclaw-core
+npm install @fire-la/billclaw-core
 ```
 
 ```typescript
-import { Billclaw } from "@fire-zu/billclaw-core";
+import { Billclaw } from "@fire-la/billclaw-core";
 
 const billclaw = new Billclaw(runtime);
 await billclaw.syncPlaid();
@@ -119,7 +119,7 @@ const transactions = await billclaw.getTransactions("all", 2024, 1);
 
 ```bash
 # Clone repository
-git clone https://github.com/fire-zu/billclaw.git
+git clone https://github.com/fire-la/billclaw.git
 cd billclaw
 
 # Install dependencies
@@ -170,6 +170,6 @@ MIT - see [LICENSE](./LICENSE) file for details.
 
 ## Links
 
-- [GitHub](https://github.com/fire-zu/billclaw)
-- [npm](https://www.npmjs.com/org/fire-zu)
-- [Documentation](https://github.com/fire-zu/billclaw/wiki)
+- [GitHub](https://github.com/fire-la/billclaw)
+- [npm](https://www.npmjs.com/org/fire-la)
+- [Documentation](https://github.com/fire-la/billclaw/wiki)

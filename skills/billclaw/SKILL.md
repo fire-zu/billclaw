@@ -19,8 +19,8 @@ Use this skill when:
 
 ## Package Information
 
-- **Packages**: `@fire-zu/billclaw-core`, `@fire-zu/billclaw-cli`, `@fire-zu/billclaw-openclaw`
-- **Repository**: https://github.com/fire-zu/billclaw
+- **Packages**: `@fire-la/billclaw-core`, `@fire-la/billclaw-cli`, `@fire-la/billclaw-openclaw`
+- **Repository**: https://github.com/fire-la/billclaw
 - **Version**: 0.0.1
 - **License**: MIT
 
@@ -30,21 +30,21 @@ Use this skill when:
 
 ```bash
 # Core package (framework-agnostic)
-npm install @fire-zu/billclaw-core
+npm install @fire-la/billclaw-core
 
 # CLI application
-npm install @fire-zu/billclaw-cli
+npm install @fire-la/billclaw-cli
 
 # OpenClaw plugin
-npm install @fire-zu/billclaw-openclaw
+npm install @fire-la/billclaw-openclaw
 ```
 
 ### Via pnpm
 
 ```bash
-pnpm add @fire-zu/billclaw-core
-pnpm add @fire-zu/billclaw-cli
-pnpm add @fire-zu/billclaw-openclaw
+pnpm add @fire-la/billclaw-core
+pnpm add @fire-la/billclaw-cli
+pnpm add @fire-la/billclaw-openclaw
 ```
 
 ## CLI Usage
@@ -247,9 +247,9 @@ billclaw export --format beancount --show-mappings
 
 ## Resources
 
-- **Documentation**: https://github.com/fire-zu/billclaw
+- **Documentation**: https://github.com/fire-la/billclaw
 - **npm packages**: https://www.npmjs.com/org/fire-zu
-- **Issues**: https://github.com/fire-zu/billclaw/issues
+- **Issues**: https://github.com/fire-la/billclaw/issues
 
 ## Contributing
 

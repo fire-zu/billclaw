@@ -16,7 +16,7 @@ import {
   Billclaw,
   getStorageDir,
   type SyncState,
-} from "@fire-zu/billclaw-core"
+} from "@fire-la/billclaw-core"
 import * as fs from "node:fs/promises"
 import * as path from "node:path"
 
