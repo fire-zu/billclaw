@@ -6,7 +6,7 @@
  */
 
 import type { OpenClawPluginApi } from "../types/openclaw-plugin.js"
-import { Billclaw } from "@fire-la/billclaw-core"
+import { Billclaw } from "@firela/billclaw-core"
 import { OpenClawRuntimeContext } from "../runtime/context.js"
 
 /**

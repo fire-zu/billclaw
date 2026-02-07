@@ -4,7 +4,7 @@
  * Simple in-memory event emitter for CLI usage.
  */
 
-import type { EventEmitter } from "@fire-la/billclaw-core"
+import type { EventEmitter } from "@firela/billclaw-core"
 
 /**
  * CLI event emitter implementation

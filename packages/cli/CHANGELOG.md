@@ -6,7 +6,7 @@
 
 - Restore original publish workflow configuration to fix npm publishing.
 - Updated dependencies
-  - @fire-la/billclaw-core@0.1.3
+  - @firela/billclaw-core@0.1.3
 
 ## 0.1.2
 
@@ -14,7 +14,7 @@
 
 - Update npm token and test publishing version 0.1.2.
 - Updated dependencies
-  - @fire-la/billclaw-core@0.1.2
+  - @firela/billclaw-core@0.1.2
 
 ## 0.1.1
 
@@ -22,7 +22,7 @@
 
 - Fix npm publish workflow and release version 0.1.1.
 - Updated dependencies
-  - @fire-la/billclaw-core@0.1.1
+  - @firela/billclaw-core@0.1.1
 
 ## 0.1.0
 
@@ -33,7 +33,7 @@
 ### Patch Changes
 
 - Updated dependencies [12a088e]
-  - @fire-la/billclaw-core@0.1.0
+  - @firela/billclaw-core@0.1.0
 
 All notable changes to this project will be documented in this file.
 

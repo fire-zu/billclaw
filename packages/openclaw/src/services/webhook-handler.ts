@@ -7,8 +7,8 @@
  */
 
 import type { OpenClawPluginApi } from "../types/openclaw-plugin.js"
-import { emitEvent, verifySignature } from "@fire-la/billclaw-core"
-import type { WebhookEventType } from "@fire-la/billclaw-core"
+import { emitEvent, verifySignature } from "@firela/billclaw-core"
+import type { WebhookEventType } from "@firela/billclaw-core"
 
 /**
  * Dependencies for webhook handlers

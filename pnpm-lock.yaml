@@ -20,7 +20,7 @@ importers:
 
   packages/cli:
     dependencies:
-      '@fire-la/billclaw-core':
+      '@firela/billclaw-core':
         specifier: workspace:*
         version: link:../core
       chalk:
@@ -98,7 +98,7 @@ importers:
 
   packages/openclaw:
     dependencies:
-      '@fire-la/billclaw-core':
+      '@firela/billclaw-core':
         specifier: workspace:*
         version: link:../core
       plaid:
@@ -3489,7 +3489,7 @@ snapshots:
 
   wide-align@1.1.5:
     dependencies:
-      string-width: 4.2.3
+      string-width: 1.0.2
     optional: true
 
   wrap-ansi@6.2.0:

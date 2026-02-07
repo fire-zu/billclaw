@@ -19,7 +19,7 @@ Use this skill when:
 
 ## Package Information
 
-- **Packages**: `@fire-la/billclaw-core`, `@fire-la/billclaw-cli`, `@fire-la/billclaw-openclaw`
+- **Packages**: `@firela/billclaw-core`, `@firela/billclaw-cli`, `@firela/billclaw-openclaw`
 - **Repository**: https://github.com/fire-la/billclaw
 - **Version**: 0.0.1
 - **License**: MIT
@@ -30,21 +30,21 @@ Use this skill when:
 
 ```bash
 # Core package (framework-agnostic)
-npm install @fire-la/billclaw-core
+npm install @firela/billclaw-core
 
 # CLI application
-npm install @fire-la/billclaw-cli
+npm install @firela/billclaw-cli
 
 # OpenClaw plugin
-npm install @fire-la/billclaw-openclaw
+npm install @firela/billclaw-openclaw
 ```
 
 ### Via pnpm
 
 ```bash
-pnpm add @fire-la/billclaw-core
-pnpm add @fire-la/billclaw-cli
-pnpm add @fire-la/billclaw-openclaw
+pnpm add @firela/billclaw-core
+pnpm add @firela/billclaw-cli
+pnpm add @firela/billclaw-openclaw
 ```
 
 ## CLI Usage

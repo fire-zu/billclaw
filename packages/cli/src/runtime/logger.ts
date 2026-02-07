@@ -4,7 +4,7 @@
  * Console-based logger with colored output and severity levels.
  */
 
-import type { Logger } from "@fire-la/billclaw-core"
+import type { Logger } from "@firela/billclaw-core"
 
 /**
  * Log level enum

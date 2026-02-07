@@ -32,7 +32,7 @@ BillClaw uses a **Plugin + Skill hybrid architecture**:
 │           └──────────┬───────────┘                          │
 │                      ▼                                      │
 │           ┌────────────────────┐                           │
-│           │  @fire-la/billclaw-core  │                     │
+│           │  @firela/billclaw-core  │                     │
 │           │  (Framework-Agnostic) │                         │
 │           └────────────────────┘                           │
 │                      │                                      │
@@ -48,7 +48,7 @@ BillClaw uses a **Plugin + Skill hybrid architecture**:
 
 ## Packages
 
-### [@fire-la/billclaw-core](./packages/core)
+### [@firela/billclaw-core](./packages/core)
 
 Framework-agnostic core business logic. This package contains all the functionality with zero dependencies on any AI framework.
 
@@ -58,7 +58,7 @@ Framework-agnostic core business logic. This package contains all the functional
 - Beancount and Ledger exporters
 - Security: keychain integration and audit logging
 
-### [@fire-la/billclaw-openclaw](./packages/openclaw)
+### [@firela/billclaw-openclaw](./packages/openclaw)
 
 OpenClaw plugin adapter. Integrates BillClaw with the OpenClaw AI framework.
 
@@ -67,7 +67,7 @@ OpenClaw plugin adapter. Integrates BillClaw with the OpenClaw AI framework.
 - 2 OAuth providers (Plaid, Gmail)
 - 2 background services (sync, webhook)
 
-### [@fire-la/billclaw-cli](./packages/cli)
+### [@firela/billclaw-cli](./packages/cli)
 
 Standalone command-line interface. Use BillClaw without any AI framework.
 
@@ -83,13 +83,13 @@ Standalone command-line interface. Use BillClaw without any AI framework.
 
 ```bash
 cd ~/.openclaw/extensions
-npm install @fire-la/billclaw-openclaw
+npm install @firela/billclaw-openclaw
 ```
 
 ### As Standalone CLI
 
 ```bash
-npm install -g @fire-la/billclaw-cli
+npm install -g @firela/billclaw-cli
 billclaw setup
 billclaw sync
 ```
@@ -97,11 +97,11 @@ billclaw sync
 ### As a Library
 
 ```bash
-npm install @fire-la/billclaw-core
+npm install @firela/billclaw-core
 ```
 
 ```typescript
-import { Billclaw } from "@fire-la/billclaw-core";
+import { Billclaw } from "@firela/billclaw-core";
 
 const billclaw = new Billclaw(runtime);
 await billclaw.syncPlaid();

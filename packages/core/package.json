@@ -1,5 +1,5 @@
 {
-  "name": "@fire-la/billclaw-core",
+  "name": "@firela/billclaw-core",
   "version": "0.1.3",
   "description": "BillClaw Core - Framework-agnostic business logic for financial data import",
   "type": "module",
