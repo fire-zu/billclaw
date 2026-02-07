@@ -1,6 +1,6 @@
 {
   "name": "@fire-zu/billclaw-openclaw",
-  "version": "0.0.6",
+  "version": "0.1.0",
   "description": "BillClaw OpenClaw Plugin - Adapter for OpenClaw AI framework",
   "type": "module",
   "main": "./dist/index.js",
