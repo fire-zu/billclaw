@@ -1,6 +1,6 @@
 {
   "name": "@firela/billclaw-cli",
-  "version": "0.1.3",
+  "version": "0.1.5",
   "description": "BillClaw CLI - Standalone command-line interface for financial data management",
   "type": "module",
   "main": "./dist/index.js",
@@ -59,7 +59,7 @@
     "vitest": "^3.0.0"
   },
   "dependencies": {
-    "@firela/billclaw-core": "workspace:*",
+    "@firela/billclaw-core": "^0.1.5",
     "chalk": "^5.4.0",
     "cli-table3": "^0.6.5",
     "commander": "^13.1.0",
