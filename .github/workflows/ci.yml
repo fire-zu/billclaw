@@ -1,5 +1,6 @@
 name: CI
 
+# Workflow for continuous integration
 on:
   push:
     branches: [main, develop]
