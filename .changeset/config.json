@@ -4,10 +4,10 @@
   "commit": false,
   "fixed": [],
   "linked": [
-    ["billclaw-core", "billclaw-cli", "billclaw-openclaw"]
+    ["@fire-zu/billclaw-core", "@fire-zu/billclaw-cli", "@fire-zu/billclaw-openclaw"]
   ],
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["@types/proper-lockfile"]
+  "ignore": []
 }
