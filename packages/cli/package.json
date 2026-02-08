@@ -59,7 +59,7 @@
     "vitest": "^3.0.0"
   },
   "dependencies": {
-    "@firela/billclaw-core": "^0.1.5",
+    "@firela/billclaw-core": "workspace:*",
     "chalk": "^5.4.0",
     "cli-table3": "^0.6.5",
     "commander": "^13.1.0",

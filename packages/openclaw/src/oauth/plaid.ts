@@ -1,20 +1,30 @@
 /**
- * Plaid OAuth handler - implements Plaid Link flow
+ * Plaid OAuth handler - OpenClaw adapter
  *
- * This module handles the Plaid Link OAuth flow for connecting bank accounts.
- * It supports two modes:
- * 1. Link token creation (for initializing Plaid Link frontend)
- * 2. Public token exchange (for completing the connection)
+ * This is an adapter layer that calls the framework-agnostic OAuth implementation
+ * from @firela/billclaw-core and adds OpenClaw-specific functionality (config management).
+ *
+ * @packageDocumentation
  */
 
 import type { OpenClawPluginApi } from "../types/openclaw-plugin.js"
-import { createPlaidClient, type PlaidConfig } from "@firela/billclaw-core"
-import type {
-  LinkTokenCreateRequest,
-  LinkTokenCreateResponse,
-  ItemPublicTokenExchangeRequest,
-  ItemPublicTokenExchangeResponse,
-} from "plaid"
+import {
+  plaidOAuthHandler as corePlaidOAuthHandler,
+  type PlaidConfig,
+} from "@firela/billclaw-core"
+import type { Logger } from "@firela/billclaw-core"
+
+/**
+ * Get a logger from OpenClaw API, or provide a no-op logger
+ */
+function getLogger(api: OpenClawPluginApi): Logger {
+  return {
+    info: api.logger?.info || (() => {}),
+    error: api.logger?.error || (() => {}),
+    warn: api.logger?.warn || (() => {}),
+    debug: api.logger?.debug || (() => {}),
+  }
+}
 
 /**
  * Get Plaid configuration from OpenClaw config
@@ -43,63 +53,54 @@ function getPlaidConfig(api: OpenClawPluginApi): PlaidConfig {
 }
 
 /**
- * Create Plaid Link token for initializing Link frontend
+ * Save Plaid OAuth tokens to account configuration
+ *
+ * NOTE: This requires the OpenClaw runtime to support config updates.
+ * The actual persistence depends on the OpenClawConfigProvider implementation.
  */
-async function createLinkToken(
+async function savePlaidTokensToAccount(
   api: OpenClawPluginApi,
-  accountId?: string,
-): Promise<{ linkToken: string }> {
-  const plaidConfig = getPlaidConfig(api)
-  const plaidClient = createPlaidClient(plaidConfig)
+  accountId: string,
+  accessToken: string,
+  itemId: string,
+): Promise<void> {
+  const logger = getLogger(api)
 
-  const request: LinkTokenCreateRequest = {
-    user: {
-      client_user_id: accountId || `user_${Date.now()}`,
-    },
-    client_name: "BillClaw",
-    products: ["transactions" as any],
-    country_codes: ["US" as any],
-    language: "en",
+  // Get config from OpenClaw
+  const config = api.pluginConfig as any
+
+  // Find and update the account
+  const accountIndex = config.accounts?.findIndex(
+    (a: any) => a.id === accountId && a.type === "plaid",
+  )
+
+  if (accountIndex === -1 || accountIndex === undefined) {
+    logger.warn(
+      `Plaid account ${accountId} not found in config. Tokens not saved.`,
+    )
+    return
   }
 
-  const axiosResponse = await plaidClient.linkTokenCreate(request)
-  const response: LinkTokenCreateResponse = axiosResponse.data
-
-  api.logger.info?.("Plaid Link token created successfully")
-
-  return { linkToken: response.link_token }
-}
-
-/**
- * Exchange Plaid public token for access token
- */
-async function exchangePublicToken(
-  api: OpenClawPluginApi,
-  publicToken: string,
-): Promise<{ accessToken: string; itemId: string }> {
-  const plaidConfig = getPlaidConfig(api)
-  const plaidClient = createPlaidClient(plaidConfig)
-
-  const request: ItemPublicTokenExchangeRequest = {
-    public_token: publicToken,
+  // Update account with tokens
+  config.accounts[accountIndex] = {
+    ...config.accounts[accountIndex],
+    plaidAccessToken: accessToken,
+    plaidItemId: itemId,
+    enabled: true, // Auto-enable account after successful OAuth
   }
 
-  const axiosResponse = await plaidClient.itemPublicTokenExchange(request)
-  const response: ItemPublicTokenExchangeResponse = axiosResponse.data
-
-  api.logger.info?.("Plaid public token exchanged successfully")
-
-  return {
-    accessToken: response.access_token,
-    itemId: response.item_id,
-  }
+  // Note: The actual persistence to disk depends on OpenClaw's config management
+  // The updated config is in memory but OpenClaw needs to handle persistence
+  logger.info(
+    `Plaid tokens updated in memory for account ${accountId}. Persistence depends on OpenClaw config management.`,
+  )
 }
 
 /**
  * Handle Plaid Link OAuth flow
  *
- * This integrates Plaid Link (https://plaid.com/docs/link/)
- * for secure bank account connection.
+ * This is an OpenClaw adapter that calls the framework-agnostic OAuth handler
+ * from @firela/billclaw-core and adds OpenClaw-specific functionality.
  *
  * Flow:
  * 1. Create Link token (no params) - Returns { url, token: linkToken }
@@ -123,77 +124,31 @@ export async function plaidOAuthHandler(
   accessToken?: string
 }> {
   try {
-    if (!publicToken) {
-      // No public token provided - create Link token for initializing Link
-      const { linkToken } = await createLinkToken(api)
+    const config = getPlaidConfig(api)
+    const logger = getLogger(api)
 
-      // Return Plaid Link URL and the link token
-      return {
-        url: "https://cdn.plaid.com/link/v2/stable/link.html",
-        token: linkToken,
-      }
+    // Call the framework-agnostic OAuth handler from core
+    const result = await corePlaidOAuthHandler(
+      config,
+      publicToken,
+      accountId,
+      logger,
+    )
+
+    // Save tokens to account config if accountId is provided and we have accessToken
+    if (accountId && result.accessToken && publicToken) {
+      await savePlaidTokensToAccount(
+        api,
+        accountId,
+        result.accessToken,
+        result.itemId || "",
+      )
+      logger.info(`Plaid tokens saved for account ${accountId}`)
     }
 
-    // Public token provided - exchange for access token
-    const { accessToken, itemId } = await exchangePublicToken(api, publicToken)
-
-    // Save tokens to account config if accountId is provided
-    if (accountId) {
-      await savePlaidTokensToAccount(api, accountId, accessToken, itemId)
-      api.logger.info?.(`Plaid tokens saved for account ${accountId}`)
-    }
-
-    // Return the access token and item ID
-    return {
-      url: "",
-      token: accessToken,
-      itemId,
-      accessToken,
-    }
+    return result
   } catch (error) {
-    api.logger.error?.("Plaid OAuth error:", error)
+    getLogger(api).error("Plaid OAuth error:", error)
     throw error
   }
-}
-
-/**
- * Save Plaid OAuth tokens to account configuration
- *
- * NOTE: This requires the OpenClaw runtime to support config updates.
- * The actual persistence depends on the OpenClawConfigProvider implementation.
- */
-async function savePlaidTokensToAccount(
-  api: OpenClawPluginApi,
-  accountId: string,
-  accessToken: string,
-  itemId: string,
-): Promise<void> {
-  // Get config from OpenClaw
-  const config = api.pluginConfig as any
-
-  // Find and update the account
-  const accountIndex = config.accounts?.findIndex(
-    (a: any) => a.id === accountId && a.type === "plaid",
-  )
-
-  if (accountIndex === -1 || accountIndex === undefined) {
-    api.logger.warn?.(
-      `Plaid account ${accountId} not found in config. Tokens not saved.`,
-    )
-    return
-  }
-
-  // Update account with tokens
-  config.accounts[accountIndex] = {
-    ...config.accounts[accountIndex],
-    plaidAccessToken: accessToken,
-    plaidItemId: itemId,
-    enabled: true, // Auto-enable account after successful OAuth
-  }
-
-  // Note: The actual persistence to disk depends on OpenClaw's config management
-  // The updated config is in memory but OpenClaw needs to handle persistence
-  api.logger.info?.(
-    `Plaid tokens updated in memory for account ${accountId}. Persistence depends on OpenClaw config management.`,
-  )
 }

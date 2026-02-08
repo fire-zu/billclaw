@@ -17,7 +17,7 @@ BillClaw is an open-source financial data import system that puts you in control
 
 ## Architecture
 
-BillClaw uses a **Plugin + Skill hybrid architecture**:
+BillClaw uses a **Framework-Agnostic Core + Adapter Pattern** architecture:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -34,17 +34,39 @@ BillClaw uses a **Plugin + Skill hybrid architecture**:
 │           ┌────────────────────┐                           │
 │           │  @firela/billclaw-core  │                     │
 │           │  (Framework-Agnostic) │                         │
-│           └────────────────────┘                           │
+│           │  ├─ oauth/           │                         │
+│           │  ├─ models/          │                         │
+│           │  ├─ storage/         │                         │
+│           │  └─ sources/         │                         │
+│           └────────┬────────────┘                           │
 │                      │                                      │
-│           ┌──────────┴──────────┐                          │
-│           ▼                     ▼                          │
-│    ┌──────────┐          ┌────────────┐                   │
-│    │  Plaid   │          │   Gmail    │                   │
-│    │   API    │          │   Parser   │                   │
-│    └──────────┘          └────────────┘                   │
+│           ┌──────────┴──────────────────────┐             │
+│           ▼                                 ▼             │
+│    ┌──────────────┐              ┌──────────────┐       │
+│    │  OpenClaw    │              │     CLI      │       │
+│    │  Adapter     │              │   Adapter    │       │
+│    └──────────────┘              └──────────────┘       │
+│           │                                 │             │
+│           └──────────┬──────────────────────────┘             │
+│                      ▼                                        │
+│           ┌────────────────────┐                             │
+│           │  @firela/            │                             │
+│           │  billclaw-connect    │                             │
+│           │  (OAuth Service)      │                             │
+│           │  └─ Web UI           │                             │
+│           │  └─ HTTP Endpoints   │                             │
+│           └────────────────────┘                             │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+**Key Changes (Phase 0 - 2026-02-08)**:
+- ✅ Extracted OAuth core logic to `@firela/billclaw-core`
+- ✅ Added `@firela/billclaw-connect` OAuth service
+- ✅ Implemented adapter pattern for OpenClaw/CLI/Connect
+- ✅ Complete OAuth flow with web UI
+
+For detailed architecture documentation, see [docs/architecture.md](./docs/architecture.md).
 
 ## Packages
 
@@ -77,7 +99,52 @@ Standalone command-line interface. Use BillClaw without any AI framework.
 - Export to Beancount/Ledger
 - Import from CSV/OFX/QFX
 
+### [@firela/billclaw-connect](./packages/connect)
+
+OAuth service for financial data provider authentication.
+
+- Express web server (localhost:3000)
+- Plaid Link web interface
+- Gmail OAuth web interface
+- Framework-agnostic OAuth handlers
+- Local-first deployment
+
+**Usage**:
+```bash
+cd packages/connect
+pnpm build
+# Configure .env with PLAID_CLIENT_ID and PLAID_SECRET
+node dist/server.js
+# Visit http://localhost:3000
+```
+
 ## Quick Start
+
+### Using Connect OAuth Service (Recommended)
+
+The easiest way to connect your financial accounts:
+
+```bash
+# 1. Build the Connect service
+cd packages/connect
+pnpm build
+
+# 2. Configure your Plaid credentials
+cat > .env << EOF
+PLAID_CLIENT_ID=your_client_id
+PLAID_SECRET=your_secret
+PLAID_ENVIRONMENT=sandbox
+PORT=3000
+EOF
+
+# 3. Start the service
+source .env && node dist/server.js
+
+# 4. Open your browser
+open http://localhost:3000
+```
+
+### As OpenClaw Plugin
 
 ### As OpenClaw Plugin
 

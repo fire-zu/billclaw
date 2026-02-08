@@ -6,6 +6,7 @@
  */
 
 import type { Logger } from "../errors/errors.js"
+export type { Logger } from "../errors/errors.js"
 import type { BillclawConfig, StorageConfig } from "../models/config.js"
 
 /**

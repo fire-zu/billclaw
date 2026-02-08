@@ -65,6 +65,9 @@ export * from "./errors/index.js"
 export * from "./credentials/index.js"
 export * from "./security/index.js"
 
+// OAuth (framework-agnostic)
+export * from "./oauth/index.js"
+
 // Runtime abstractions
 export * from "./runtime/index.js"
 
