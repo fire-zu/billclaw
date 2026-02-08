@@ -71,6 +71,9 @@ export const AccountConfigSchema = z.object({
   gocardlessAccessToken: z.string().optional(),
   // Gmail-specific
   gmailEmailAddress: z.string().email().optional(),
+  gmailAccessToken: z.string().optional(),
+  gmailRefreshToken: z.string().optional(),
+  gmailTokenExpiry: z.string().optional(), // ISO timestamp
   gmailFilters: z.array(z.string()).optional(),
 })
 export type AccountConfig = z.infer<typeof AccountConfigSchema>

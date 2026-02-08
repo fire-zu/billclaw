@@ -8,7 +8,7 @@
  */
 
 // Main class
-export { Billclaw } from "./billclaw.js"
+export { Billclaw, isTokenExpired } from "./billclaw.js"
 
 // Models and schemas
 export * from "./models/index.js"

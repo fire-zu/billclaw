@@ -209,15 +209,21 @@ async function exchangeCodeForToken(
  *
  * Flow:
  * 1. Initialize OAuth (no params) - Returns { url, state }
- * 2. Handle callback (code + state) - Returns { accessToken, refreshToken }
+ * 2. Handle callback (code + state + accountId) - Returns { accessToken, refreshToken }
+ *    - Tokens are automatically saved to account config if accountId is provided
  *
  * @param api - OpenClaw plugin API
- * @param context - OAuth context with optional code and state from callback
+ * @param context - OAuth context with optional code, state, redirectUri, and accountId
  * @returns OAuthResult with URL and/or token
  */
 export async function gmailOAuthHandler(
   api: OpenClawPluginApi,
-  context?: { code?: string; state?: string; redirectUri?: string },
+  context?: {
+    code?: string
+    state?: string
+    redirectUri?: string
+    accountId?: string
+  },
 ): Promise<{
   url: string
   state?: string
@@ -226,7 +232,7 @@ export async function gmailOAuthHandler(
   expiresIn?: number
 }> {
   try {
-    const { code, state, redirectUri } = context || {}
+    const { code, state, redirectUri, accountId } = context || {}
 
     // Phase 1: Generate authorization URL
     if (!code) {
@@ -252,6 +258,20 @@ export async function gmailOAuthHandler(
       redirectUri,
     )
 
+    // Save tokens to account config if accountId is provided
+    if (accountId) {
+      await saveGmailTokensToAccount(
+        api,
+        accountId,
+        accessToken,
+        refreshToken,
+        expiresIn,
+      )
+      api.logger.info?.(
+        `Gmail tokens saved for account ${accountId} (expires in ${expiresIn}s)`,
+      )
+    }
+
     return {
       url: "",
       accessToken,
@@ -261,5 +281,134 @@ export async function gmailOAuthHandler(
   } catch (error) {
     api.logger.error?.("Gmail OAuth error:", error)
     throw error
+  }
+}
+
+/**
+ * Save Gmail OAuth tokens to account configuration
+ *
+ * NOTE: This requires the OpenClaw runtime to support config updates.
+ * The actual persistence depends on the OpenClawConfigProvider implementation.
+ */
+async function saveGmailTokensToAccount(
+  api: OpenClawPluginApi,
+  accountId: string,
+  accessToken: string,
+  refreshToken: string | undefined,
+  expiresIn: number | undefined,
+): Promise<void> {
+  // Calculate token expiry timestamp
+  const expiresAt = expiresIn
+    ? new Date(Date.now() + expiresIn * 1000).toISOString()
+    : undefined
+
+  // Get config from OpenClaw
+  const config = api.pluginConfig as any
+
+  // Find and update the account
+  const accountIndex = config.accounts?.findIndex(
+    (a: any) => a.id === accountId && a.type === "gmail",
+  )
+
+  if (accountIndex === -1 || accountIndex === undefined) {
+    api.logger.warn?.(
+      `Gmail account ${accountId} not found in config. Tokens not saved.`,
+    )
+    return
+  }
+
+  // Update account with tokens
+  config.accounts[accountIndex] = {
+    ...config.accounts[accountIndex],
+    gmailAccessToken: accessToken,
+    gmailRefreshToken: refreshToken,
+    gmailTokenExpiry: expiresAt,
+    enabled: true, // Auto-enable account after successful OAuth
+  }
+
+  // Note: The actual persistence to disk depends on OpenClaw's config management
+  // The updated config is in memory but OpenClaw needs to handle persistence
+  api.logger.info?.(
+    `Gmail tokens updated in memory for account ${accountId}. Persistence depends on OpenClaw config management.`,
+  )
+}
+
+/**
+ * Refresh Gmail access token using refresh token
+ *
+ * @param api - OpenClaw plugin API
+ * @param accountId - Account ID to refresh token for
+ * @returns New access token and expiry info, or null if refresh failed
+ */
+export async function refreshGmailToken(
+  api: OpenClawPluginApi,
+  accountId: string,
+): Promise<{ accessToken: string; expiresIn: number } | null> {
+  const config = api.pluginConfig as any
+
+  // Find the account
+  const account = config.accounts?.find(
+    (a: any) => a.id === accountId && a.type === "gmail",
+  )
+
+  if (!account) {
+    api.logger.error?.(`Gmail account ${accountId} not found`)
+    return null
+  }
+
+  const { clientId, clientSecret } = getGmailConfig(api)
+
+  if (!account.gmailRefreshToken) {
+    api.logger.error?.(
+      `No refresh token available for Gmail account ${accountId}. User must re-authenticate.`,
+    )
+    return null
+  }
+
+  try {
+    const response = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        refresh_token: account.gmailRefreshToken,
+        grant_type: "refresh_token",
+      }),
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(
+        `Gmail token refresh failed: ${response.status} ${errorText}`,
+      )
+    }
+
+    const data = (await response.json()) as {
+      access_token: string
+      expires_in: number
+      refresh_token?: string
+    }
+
+    api.logger.info?.(`Gmail token refreshed successfully for ${accountId}`)
+
+    // Save new tokens to account config
+    await saveGmailTokensToAccount(
+      api,
+      accountId,
+      data.access_token,
+      data.refresh_token || account.gmailRefreshToken,
+      data.expires_in,
+    )
+
+    return {
+      accessToken: data.access_token,
+      expiresIn: data.expires_in,
+    }
+  } catch (error) {
+    api.logger.error?.(`Gmail token refresh error:`, error)
+    return null
   }
 }

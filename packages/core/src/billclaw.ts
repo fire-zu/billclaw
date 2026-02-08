@@ -42,6 +42,29 @@ import {
 } from "./exporters/index.js"
 
 /**
+ * Check if an OAuth token is expired or about to expire
+ *
+ * @param expiryIso - Token expiry time as ISO string
+ * @param bufferSeconds - Buffer time in seconds before expiry (default: 300 = 5 minutes)
+ * @returns true if token is expired or will expire within buffer time
+ */
+export function isTokenExpired(
+  expiryIso: string | undefined,
+  bufferSeconds: number = 300,
+): boolean {
+  if (!expiryIso) {
+    // No expiry time means token doesn't expire
+    return false
+  }
+
+  const expiryTime = new Date(expiryIso).getTime()
+  const now = Date.now()
+  const bufferMs = bufferSeconds * 1000
+
+  return now >= expiryTime - bufferMs
+}
+
+/**
  * BillClaw - Main class for financial data import
  */
 export class Billclaw {
@@ -238,12 +261,53 @@ export class Billclaw {
     const results: GmailFetchResult[] = []
 
     for (const account of accounts) {
+      // Get access token from account config
+      const accountConfig = config.accounts.find((a) => a.id === account.id)
+      const accessToken = accountConfig?.gmailAccessToken
+      const tokenExpiry = accountConfig?.gmailTokenExpiry
+
+      if (!accessToken) {
+        this.logger.warn?.(
+          `No access token found for Gmail account ${account.id}. Please run OAuth setup first.`,
+        )
+        results.push({
+          accountId: account.id,
+          success: false,
+          emailsProcessed: 0,
+          billsExtracted: 0,
+          transactionsAdded: 0,
+          transactionsUpdated: 0,
+          errors: ["No OAuth access token found. Please run OAuth setup first."],
+        })
+        continue
+      }
+
+      // Check if token is expired (with 5 minute buffer)
+      if (isTokenExpired(tokenExpiry, 300)) {
+        this.logger.warn?.(
+          `Access token expired for Gmail account ${account.id}. Please refresh the token.`,
+        )
+        results.push({
+          accountId: account.id,
+          success: false,
+          emailsProcessed: 0,
+          billsExtracted: 0,
+          transactionsAdded: 0,
+          transactionsUpdated: 0,
+          errors: [
+            "Access token expired. Please refresh the token using OAuth refresh flow.",
+          ],
+        })
+        continue
+      }
+
       const result = await fetchGmailBills(
         account,
         days,
         gmailConfig,
         storageConfig,
         this.logger,
+        accessToken,
       )
       results.push(result)
     }

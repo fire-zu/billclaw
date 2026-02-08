@@ -105,14 +105,17 @@ async function exchangePublicToken(
  * 1. Create Link token (no params) - Returns { url, token: linkToken }
  * 2. Handle Link success callback - Receives publicToken
  * 3. Exchange public_token for access_token - Returns { url: "", token: accessToken, itemId }
+ *    - If accountId is provided, tokens are automatically saved to account config
  *
  * @param api - OpenClaw plugin API
  * @param publicToken - Optional public token from Plaid Link callback
+ * @param accountId - Optional account ID to save tokens to
  * @returns OAuthResult with URL and token
  */
 export async function plaidOAuthHandler(
   api: OpenClawPluginApi,
   publicToken?: string,
+  accountId?: string,
 ): Promise<{
   url: string
   token?: string
@@ -134,7 +137,13 @@ export async function plaidOAuthHandler(
     // Public token provided - exchange for access token
     const { accessToken, itemId } = await exchangePublicToken(api, publicToken)
 
-    // Return the access token and item ID for storage
+    // Save tokens to account config if accountId is provided
+    if (accountId) {
+      await savePlaidTokensToAccount(api, accountId, accessToken, itemId)
+      api.logger.info?.(`Plaid tokens saved for account ${accountId}`)
+    }
+
+    // Return the access token and item ID
     return {
       url: "",
       token: accessToken,
@@ -145,4 +154,46 @@ export async function plaidOAuthHandler(
     api.logger.error?.("Plaid OAuth error:", error)
     throw error
   }
+}
+
+/**
+ * Save Plaid OAuth tokens to account configuration
+ *
+ * NOTE: This requires the OpenClaw runtime to support config updates.
+ * The actual persistence depends on the OpenClawConfigProvider implementation.
+ */
+async function savePlaidTokensToAccount(
+  api: OpenClawPluginApi,
+  accountId: string,
+  accessToken: string,
+  itemId: string,
+): Promise<void> {
+  // Get config from OpenClaw
+  const config = api.pluginConfig as any
+
+  // Find and update the account
+  const accountIndex = config.accounts?.findIndex(
+    (a: any) => a.id === accountId && a.type === "plaid",
+  )
+
+  if (accountIndex === -1 || accountIndex === undefined) {
+    api.logger.warn?.(
+      `Plaid account ${accountId} not found in config. Tokens not saved.`,
+    )
+    return
+  }
+
+  // Update account with tokens
+  config.accounts[accountIndex] = {
+    ...config.accounts[accountIndex],
+    plaidAccessToken: accessToken,
+    plaidItemId: itemId,
+    enabled: true, // Auto-enable account after successful OAuth
+  }
+
+  // Note: The actual persistence to disk depends on OpenClaw's config management
+  // The updated config is in memory but OpenClaw needs to handle persistence
+  api.logger.info?.(
+    `Plaid tokens updated in memory for account ${accountId}. Persistence depends on OpenClaw config management.`,
+  )
 }
