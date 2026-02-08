@@ -103,7 +103,7 @@ Standalone command-line interface. Use BillClaw without any AI framework.
 
 OAuth service for financial data provider authentication.
 
-- Express web server (localhost:3000)
+- Express web server (localhost:4456)
 - Plaid Link web interface
 - Gmail OAuth web interface
 - Framework-agnostic OAuth handlers
@@ -115,7 +115,7 @@ cd packages/connect
 pnpm build
 # Configure .env with PLAID_CLIENT_ID and PLAID_SECRET
 node dist/server.js
-# Visit http://localhost:3000
+# Visit http://localhost:4456
 ```
 
 ## Quick Start
@@ -134,14 +134,14 @@ cat > .env << EOF
 PLAID_CLIENT_ID=your_client_id
 PLAID_SECRET=your_secret
 PLAID_ENVIRONMENT=sandbox
-PORT=3000
+PORT=4456
 EOF
 
 # 3. Start the service
 source .env && node dist/server.js
 
 # 4. Open your browser
-open http://localhost:3000
+open http://localhost:4456
 ```
 
 ### As OpenClaw Plugin
