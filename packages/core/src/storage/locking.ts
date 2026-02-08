@@ -231,4 +231,9 @@ export const LockNames = {
    * Export lock (protects data export operations)
    */
   EXPORT: ".export.lock",
+
+  /**
+   * Configuration lock (protects config file writes)
+   */
+  CONFIG: ".config.lock",
 }

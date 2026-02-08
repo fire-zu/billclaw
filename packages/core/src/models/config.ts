@@ -161,6 +161,15 @@ export const GmailConfigSchema = z.object({
 export type GmailConfig = z.infer<typeof GmailConfigSchema>
 
 /**
+ * Connect service configuration
+ */
+export const ConnectConfigSchema = z.object({
+  port: z.number().int().min(1).max(65535).default(4456),
+  host: z.string().default("localhost"),
+})
+export type ConnectConfig = z.infer<typeof ConnectConfigSchema>
+
+/**
  * Sync configuration
  */
 export const SyncConfigSchema = z.object({
@@ -174,6 +183,7 @@ export type SyncConfig = z.infer<typeof SyncConfigSchema>
  * Main BillClaw configuration schema
  */
 export const BillclawConfigSchema = z.object({
+  version: z.number().default(1),
   accounts: z.array(AccountConfigSchema).default([]),
   webhooks: z.array(WebhookConfigSchema).default([]),
   storage: StorageConfigSchema.default({
@@ -191,5 +201,9 @@ export const BillclawConfigSchema = z.object({
   }),
   gocardless: GoCardlessConfigSchema.optional(),
   gmail: GmailConfigSchema.optional(),
+  connect: ConnectConfigSchema.default({
+    port: 4456,
+    host: "localhost",
+  }),
 })
 export type BillclawConfig = z.infer<typeof BillclawConfigSchema>

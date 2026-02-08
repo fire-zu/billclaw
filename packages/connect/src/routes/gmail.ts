@@ -10,7 +10,7 @@ import express from "express"
 import type { Router } from "express"
 import {
   gmailOAuthHandler,
-  type GmailOAuthConfig,
+  ConfigManager,
 } from "@firela/billclaw-core"
 
 export const gmailRouter: Router = express.Router()
@@ -22,7 +22,8 @@ export const gmailRouter: Router = express.Router()
  */
 gmailRouter.get("/authorize", async (req, res) => {
   try {
-    const config = getGmailConfig()
+    const configManager = ConfigManager.getInstance()
+    const config = await configManager.getServiceConfig("gmail")
     const redirectUri = req.query.redirectUri as string | undefined
 
     const result = await gmailOAuthHandler(config, { redirectUri })
@@ -57,7 +58,8 @@ gmailRouter.post("/exchange", async (req, res) => {
       })
     }
 
-    const config = getGmailConfig()
+    const configManager = ConfigManager.getInstance()
+    const config = await configManager.getServiceConfig("gmail")
     const result = await gmailOAuthHandler(config, { code, state, redirectUri })
 
     res.json({
@@ -74,22 +76,3 @@ gmailRouter.post("/exchange", async (req, res) => {
     })
   }
 })
-
-/**
- * Get Gmail configuration from environment variables
- */
-function getGmailConfig(): GmailOAuthConfig {
-  const clientId = process.env.GMAIL_CLIENT_ID
-  const clientSecret = process.env.GMAIL_CLIENT_SECRET
-
-  if (!clientId) {
-    throw new Error(
-      "Gmail credentials not configured. Set GMAIL_CLIENT_ID environment variable.",
-    )
-  }
-
-  return {
-    clientId,
-    clientSecret: clientSecret || "",
-  }
-}

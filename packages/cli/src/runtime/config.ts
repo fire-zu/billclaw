@@ -109,6 +109,7 @@ export class CliConfigProvider implements ConfigProvider {
 
   private getDefaultConfig(): BillclawConfig {
     return {
+      version: 1,
       accounts: [],
       webhooks: [],
       storage: {
@@ -123,6 +124,10 @@ export class CliConfigProvider implements ConfigProvider {
       },
       plaid: {
         environment: "sandbox",
+      },
+      connect: {
+        port: 4456,
+        host: "localhost",
       },
     }
   }

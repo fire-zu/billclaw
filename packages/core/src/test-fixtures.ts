@@ -83,6 +83,7 @@ export const mockAccounts: AccountConfig[] = [
  * Sample complete configuration
  */
 export const mockConfig: BillclawConfig = {
+  version: 1,
   accounts: mockAccounts,
   webhooks: [
     {
@@ -118,6 +119,10 @@ export const mockConfig: BillclawConfig = {
     confidenceThreshold: 0.5,
     requireAmount: false,
     requireDate: false,
+  },
+  connect: {
+    port: 4456,
+    host: "localhost",
   },
 }
 

@@ -10,7 +10,7 @@ import express from "express"
 import type { Router } from "express"
 import {
   plaidOAuthHandler,
-  type PlaidConfig,
+  ConfigManager,
 } from "@firela/billclaw-core"
 
 export const plaidRouter: Router = express.Router()
@@ -22,7 +22,8 @@ export const plaidRouter: Router = express.Router()
  */
 plaidRouter.get("/link-token", async (_req, res) => {
   try {
-    const config = getPlaidConfig()
+    const configManager = ConfigManager.getInstance()
+    const config = await configManager.getServiceConfig("plaid")
     const result = await plaidOAuthHandler(config)
 
     // Return the Link token and the Plaid Link URL
@@ -56,7 +57,8 @@ plaidRouter.post("/exchange", async (req, res) => {
       })
     }
 
-    const config = getPlaidConfig()
+    const configManager = ConfigManager.getInstance()
+    const config = await configManager.getServiceConfig("plaid")
     const result = await plaidOAuthHandler(config, publicToken, accountId)
 
     res.json({
@@ -72,23 +74,3 @@ plaidRouter.post("/exchange", async (req, res) => {
     })
   }
 })
-
-/**
- * Get Plaid configuration from environment variables
- */
-function getPlaidConfig(): PlaidConfig {
-  const clientId = process.env.PLAID_CLIENT_ID
-  const secret = process.env.PLAID_SECRET
-  const environment = (process.env.PLAID_ENVIRONMENT || "sandbox") as
-    | "sandbox"
-    | "development"
-    | "production"
-
-  if (!clientId || !secret) {
-    throw new Error(
-      "Plaid credentials not configured. Set PLAID_CLIENT_ID and PLAID_SECRET environment variables.",
-    )
-  }
-
-  return { clientId, secret, environment }
-}

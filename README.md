@@ -124,6 +124,39 @@ node dist/server.js
 
 The easiest way to connect your financial accounts:
 
+**Option 1: Using config file** (Recommended for persistence)
+
+```bash
+# 1. Build the Connect service
+cd packages/connect
+pnpm build
+
+# 2. Create config directory and config file
+mkdir -p ~/.billclaw
+cat > ~/.billclaw/config.json << EOF
+{
+  "version": 1,
+  "connect": {
+    "port": 4456,
+    "host": "localhost"
+  },
+  "plaid": {
+    "clientId": "your_client_id",
+    "secret": "your_secret",
+    "environment": "sandbox"
+  }
+}
+EOF
+
+# 3. Start the service
+node dist/server.js
+
+# 4. Open your browser
+open http://localhost:4456
+```
+
+**Option 2: Using environment variables** (For quick testing)
+
 ```bash
 # 1. Build the Connect service
 cd packages/connect
@@ -135,6 +168,7 @@ PLAID_CLIENT_ID=your_client_id
 PLAID_SECRET=your_secret
 PLAID_ENVIRONMENT=sandbox
 PORT=4456
+HOST=localhost
 EOF
 
 # 3. Start the service

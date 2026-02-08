@@ -71,6 +71,9 @@ export * from "./oauth/index.js"
 // Runtime abstractions
 export * from "./runtime/index.js"
 
+// Configuration management
+export * from "./config/index.js"
+
 // Services (event emission, webhooks)
 export * from "./services/index.js"
 
